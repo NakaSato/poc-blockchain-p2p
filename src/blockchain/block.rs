@@ -190,7 +190,11 @@ impl Block {
 
     /// Calculate block hash
     pub fn calculate_hash(&self) -> Result<String> {
-        let header_data = bincode::serialize(&self.header)
+        // Create a copy of header with hash field set to empty to ensure consistent hashing
+        let mut header_for_hash = self.header.clone();
+        header_for_hash.hash = String::new();
+        
+        let header_data = bincode::serialize(&header_for_hash)
             .map_err(|e| anyhow!("Failed to serialize block header: {}", e))?;
 
         let mut hasher = Sha256::new();
@@ -522,7 +526,7 @@ impl Default for ValidatorInfo {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::blockchain::transaction::{Transaction, TransactionType};
+    use crate::blockchain::transaction::Transaction;
 
     #[test]
     fn test_genesis_block_creation() {
