@@ -1,0 +1,380 @@
+# GridTokenX Blockchain Node Configuration
+# This is a sample configuration file for running a GridTokenX node
+
+[node]
+# Unique node identifier (will be auto-generated if not provided)
+node_id = "gridtokenx-node-001"
+# Node type: validator, trader, observer, grid_operator, authority
+node_type = "validator"
+
+[network]
+# Network name (mainnet, testnet, devnet)
+network_name = "gridtokenx-testnet"
+# Network ID for transaction replay protection
+network_id = 1001
+# Chain ID
+chain_id = 1001
+# Genesis block hash (leave empty for auto-generation)
+genesis_hash = ""
+# Bootstrap nodes for initial connection
+bootstrap_nodes = [
+    "/ip4/127.0.0.1/tcp/9001/p2p/12D3KooWGRUcQZLQwGfXLrqzWqwNFR1F4xQ2cKWBgCBqC3vQvJGH",
+    "/ip4/127.0.0.1/tcp/9002/p2p/12D3KooWHkPeqfyM4xRsGdHUiFYmWgZCfVNLm8K9Z5jGgXvP9QsZ"
+]
+# Maximum number of peers to maintain
+max_peers = 50
+
+[p2p]
+# Local listening address
+listen_addr = "/ip4/0.0.0.0/tcp/9000"
+# External address for NAT traversal (optional)
+external_addr = ""
+# P2P port
+port = 9000
+# Maximum inbound connections
+max_inbound_connections = 25
+# Maximum outbound connections
+max_outbound_connections = 25
+# Connection timeout in seconds
+connection_timeout = 30
+# Enable mDNS discovery
+enable_mdns = true
+
+[p2p.gossip]
+# Heartbeat interval in seconds
+heartbeat_interval = 1
+# Message TTL in seconds
+message_ttl = 300
+# Maximum message size in bytes
+max_message_size = 1048576
+# Mesh maintenance interval in seconds
+mesh_maintenance_interval = 5
+
+[api]
+# API server host
+host = "127.0.0.1"
+# API server port
+port = 8080
+# Enable CORS
+enable_cors = true
+# CORS allowed origins
+cors_origins = ["*"]
+# Request timeout in seconds
+request_timeout = 30
+
+[api.rate_limit]
+# Requests per minute per IP
+requests_per_minute = 60
+# Burst size
+burst_size = 10
+# Enable rate limiting
+enabled = true
+
+[storage]
+# Storage backend: rocksdb, redis, memory
+backend = "rocksdb"
+# Data directory path
+path = "./data"
+# Cache size in MB
+cache_size = 128
+# Enable compression
+compression = true
+
+[storage.backup]
+# Enable automatic backups
+enabled = true
+# Backup interval in hours
+interval_hours = 24
+# Backup directory
+backup_dir = "./backups"
+# Number of backups to keep
+retention_count = 7
+
+[storage.pruning]
+# Enable pruning
+enabled = false
+# Blocks to keep (0 = keep all)
+keep_blocks = 0
+# Pruning interval in blocks
+pruning_interval = 1000
+
+[consensus]
+# Consensus algorithm: pos, pow, hybrid, poa
+algorithm = "hybrid"
+# Block time target in seconds
+block_time = 10
+# Maximum block size in bytes
+max_block_size = 1048576
+# Gas limit per block
+gas_limit = 10000000
+# Minimum validator stake in tokens
+min_validator_stake = 100000
+
+[consensus.validator]
+# Maximum number of validators
+max_validators = 21
+# Validator rotation period in blocks
+rotation_period = 1000
+
+[consensus.validator.slashing]
+# Slash rate for double signing
+double_sign_slash_rate = 0.05
+# Slash rate for downtime
+downtime_slash_rate = 0.01
+# Downtime threshold in blocks
+downtime_threshold = 100
+
+[consensus.validator.rewards]
+# Block reward in tokens
+block_reward = 50000
+# Transaction fee sharing rate with validators
+fee_share_rate = 0.8
+# Energy trading incentive rate
+energy_incentive_rate = 0.1
+
+[consensus.pow]
+# Initial PoW difficulty
+initial_difficulty = 1000
+# Difficulty adjustment period in blocks
+difficulty_adjustment = 144
+# Target block time for PoW components in seconds
+pow_block_time = 60
+
+[energy]
+# Energy to token conversion rate (1 kWh = X tokens)
+energy_token_ratio = 1.0
+# Minimum trade amount in kWh
+min_trade_amount = 0.1
+# Maximum trade amount in kWh
+max_trade_amount = 10000.0
+
+[energy.order_book]
+# Maximum orders per trader
+max_orders_per_trader = 100
+# Default order expiration time in hours
+default_expiration_hours = 24
+# Minimum order size in kWh
+min_order_size = 0.1
+
+[energy.order_book.matching]
+# Price tolerance for matching (%)
+price_tolerance = 5.0
+# Enable time preference for matching
+time_preference = true
+# Location preference weight
+location_preference_weight = 0.1
+
+[energy.carbon_credits]
+# Enable carbon credit tracking
+enabled = true
+# Verification required for carbon credits
+verification_required = true
+
+[energy.carbon_credits.credit_rates]
+# Carbon credit rates by energy source (credits per kWh)
+solar = 0.5
+wind = 0.6
+hydro = 0.4
+biomass = 0.3
+geothermal = 0.7
+
+[energy.price_limits]
+# Minimum price per kWh in tokens
+min_price = 1000
+# Maximum price per kWh in tokens
+max_price = 10000
+# Daily price change limit (%)
+daily_change_limit = 50.0
+
+[grid]
+# Grid operator configurations
+[[grid.grid_operators]]
+name = "EGAT"
+endpoint = "https://api.egat.co.th"
+regions = ["central", "northern"]
+
+[[grid.grid_operators]]
+name = "MEA"
+endpoint = "https://api.mea.or.th"
+regions = ["bangkok", "metro"]
+
+[[grid.grid_operators]]
+name = "PEA"
+endpoint = "https://api.pea.co.th"
+regions = ["provincial"]
+
+[grid.scada]
+# Enable SCADA integration
+enabled = false
+# SCADA protocol (modbus, dnp3, iec61850)
+protocol = "modbus"
+
+[grid.scada.connection]
+host = "127.0.0.1"
+port = 502
+unit_id = 1
+timeout = 30
+
+[grid.smart_meters]
+# Enable smart meter integration
+enabled = false
+# Communication protocol
+protocol = "mqtt"
+# Reading interval in seconds
+reading_interval = 60
+
+[grid.smart_meters.validation]
+# Maximum reading deviation (%)
+max_deviation = 10.0
+# Minimum reading interval in seconds
+min_interval = 30
+# Enable anomaly detection
+anomaly_detection = true
+
+[grid.stability_monitoring]
+# Monitor frequency stability
+monitor_frequency = true
+# Monitor voltage stability
+monitor_voltage = true
+
+[grid.stability_monitoring.thresholds]
+# Frequency deviation limit in Hz
+frequency_deviation = 0.5
+# Voltage deviation limit (%)
+voltage_deviation = 5.0
+# Load imbalance threshold (%)
+load_imbalance = 10.0
+
+[governance]
+# Enable governance features
+enabled = true
+# Voting period in days
+voting_period_days = 7
+# Quorum threshold (0.0-1.0)
+quorum_threshold = 0.5
+
+[governance.proposal]
+# Minimum stake required to create proposal
+min_stake_to_propose = 1000000
+# Proposal fee in tokens
+proposal_fee = 10000
+# Execution delay in days after approval
+execution_delay_days = 2
+
+[security]
+[security.crypto]
+# Signature algorithm (Ed25519, ECDSA)
+signature_algorithm = "Ed25519"
+# Hash algorithm (SHA256, Blake2b)
+hash_algorithm = "SHA256"
+
+[security.crypto.key_derivation]
+# Key derivation algorithm
+algorithm = "PBKDF2"
+# Iteration count
+iterations = 100000
+# Salt length in bytes
+salt_length = 32
+
+[security.network_security]
+# Enable DDoS protection
+ddos_protection = true
+# IP whitelist (empty = allow all)
+ip_whitelist = []
+# IP blacklist
+ip_blacklist = []
+
+[security.network_security.connection_limits]
+# Maximum connections per IP
+max_connections_per_ip = 10
+# Connection rate limit per minute
+connection_rate_limit = 100
+# Ban duration in seconds
+ban_duration = 3600
+
+[security.access_control]
+# Require API authentication
+require_auth = false
+
+[security.access_control.jwt]
+# JWT secret key (change in production!)
+secret_key = "change-this-secret-key-in-production"
+# Token expiration in hours
+expiration_hours = 24
+# JWT issuer
+issuer = "gridtokenx"
+
+[security.access_control.rbac]
+# Enable role-based access control
+enabled = false
+# Default user role
+default_role = "observer"
+
+[logging]
+# Log level (trace, debug, info, warn, error)
+level = "info"
+# Log format (json, pretty)
+format = "pretty"
+
+[logging.file_logging]
+# Enable file logging
+enabled = true
+# Log file path
+file_path = "./logs/gridtokenx.log"
+
+[logging.file_logging.rotation]
+# Maximum file size in MB
+max_size_mb = 100
+# Number of files to keep
+keep_files = 10
+# Rotation interval
+rotation_interval = "daily"
+
+[logging.metrics]
+# Enable metrics collection
+enabled = true
+# Metrics endpoint
+endpoint = "/metrics"
+# Collection interval in seconds
+collection_interval = 60
+
+[thai_market]
+[thai_market.erc_compliance]
+# Enable ERC (Energy Regulatory Commission) compliance
+enabled = true
+# ERC API endpoint
+erc_api_endpoint = "https://api.erc.or.th"
+# Compliance check interval in hours
+check_interval_hours = 24
+
+[thai_market.peak_hours]
+# Peak hours start (24-hour format)
+start_hour = 18
+# Peak hours end (24-hour format)
+end_hour = 22
+# Peak hour pricing multiplier
+pricing_multiplier = 1.5
+# Enable weekend peak hours
+weekend_peak_enabled = false
+
+[thai_market.regions]
+# Default region
+default_region = "central"
+# Grid zones
+grid_zones = ["zone1", "zone2", "zone3", "zone4"]
+
+[thai_market.regions.regional_multipliers]
+# Regional pricing multipliers
+bangkok = 1.2
+central = 1.0
+northern = 0.9
+northeastern = 0.8
+southern = 1.1
+
+[thai_market.currency]
+# Base currency
+base_currency = "THB"
+# Exchange rate source API
+exchange_rate_source = "https://api.exchangerate-api.com"
+# Rate update interval in hours
+rate_update_interval = 1
