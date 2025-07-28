@@ -1,1 +1,34 @@
 /target
+
+# Rust build artifacts
+Cargo.lock
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Database files
+data/
+*.db
+*.sqlite
+
+# Backup files
+*.bak
+*.backup
+
+# Documentation build
+docs/_build/
+
+# Planning documents (optional - uncomment to include in git)
+# POA_CONSENSUS_PLAN.md
+# POA_TECHNICAL_SPEC.md
