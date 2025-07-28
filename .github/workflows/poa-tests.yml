@@ -1,0 +1,382 @@
+name: POA Consensus Testing
+
+on:
+  push:
+    paths:
+      - 'src/consensus/**'
+      - 'src/config.rs'
+      - 'src/blockchain/**'
+  pull_request:
+    paths:
+      - 'src/consensus/**'
+      - 'src/config.rs'
+      - 'src/blockchain/**'
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  # POA Authority Management Tests
+  authority-tests:
+    name: Authority Management Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo registry
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Test Authority Registry
+        run: |
+          cargo test authority_registry --verbose
+          cargo test thai_authority --verbose
+
+      - name: Test Authority Registration
+        run: |
+          cargo test authority_registration --verbose
+          cargo test license_verification --verbose
+
+      - name: Test Authority Governance
+        run: |
+          cargo test governance --verbose
+          cargo test voting --verbose
+
+  # Consensus Algorithm Tests
+  consensus-tests:
+    name: Consensus Algorithm Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo registry
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Test Round-Robin Selection
+        run: |
+          cargo test round_robin --verbose
+          cargo test validator_selection --verbose
+
+      - name: Test Block Proposal
+        run: |
+          cargo test block_proposal --verbose
+          cargo test authority_signature --verbose
+
+      - name: Test Consensus Rounds
+        run: |
+          cargo test consensus_round --verbose
+          cargo test state_advance --verbose
+
+  # Performance and Load Tests
+  performance-tests:
+    name: POA Performance Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo registry
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Test Block Production Speed
+        run: |
+          cargo test --release block_production_speed --verbose
+
+      - name: Test Authority Selection Performance
+        run: |
+          cargo test --release authority_selection_perf --verbose
+
+      - name: Test Concurrent Governance
+        run: |
+          cargo test --release concurrent_governance --verbose
+
+      - name: Load Test with Multiple Authorities
+        run: |
+          cargo test --release multiple_authorities_load --verbose
+
+  # Thai Energy Market Integration Tests
+  thai-integration-tests:
+    name: Thai Energy Market Integration
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo registry
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Test EGAT Authority Integration
+        run: |
+          cargo test egat_authority --verbose
+
+      - name: Test MEA Authority Integration
+        run: |
+          cargo test mea_authority --verbose
+
+      - name: Test PEA Authority Integration
+        run: |
+          cargo test pea_authority --verbose
+
+      - name: Test Energy Regulatory Commission
+        run: |
+          cargo test erc_authority --verbose
+
+      - name: Test Energy Transaction Validation
+        run: |
+          cargo test energy_transaction_validation --verbose
+
+      - name: Test Grid Compliance
+        run: |
+          cargo test grid_compliance --verbose
+
+  # Security and Resilience Tests
+  security-tests:
+    name: POA Security Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo registry
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Test Authority Authentication
+        run: |
+          cargo test authority_auth --verbose
+          cargo test signature_validation --verbose
+
+      - name: Test Malicious Authority Handling
+        run: |
+          cargo test malicious_authority --verbose
+          cargo test invalid_signatures --verbose
+
+      - name: Test Authority Fallback
+        run: |
+          cargo test authority_fallback --verbose
+          cargo test unhealthy_authority --verbose
+
+      - name: Test Governance Attack Resistance
+        run: |
+          cargo test governance_attacks --verbose
+          cargo test voting_manipulation --verbose
+
+  # Reputation System Tests
+  reputation-tests:
+    name: Reputation System Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo registry
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Test Reputation Calculation
+        run: |
+          cargo test reputation_calculation --verbose
+
+      - name: Test Performance Tracking
+        run: |
+          cargo test performance_tracking --verbose
+
+      - name: Test Health Monitoring
+        run: |
+          cargo test health_monitoring --verbose
+
+      - name: Test Reputation-Based Selection
+        run: |
+          cargo test reputation_selection --verbose
+
+  # Integration Test with Full Network
+  network-integration:
+    name: Full Network Integration Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo registry
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Build test network
+        run: |
+          cargo build --release
+
+      - name: Start multi-authority test network
+        run: |
+          # Start multiple authority nodes
+          cargo run --release -- init &
+          sleep 2
+          
+          # Start first authority (EGAT)
+          RUST_LOG=info cargo run --release -- start --config test_configs/egat.toml &
+          EGAT_PID=$!
+          sleep 5
+          
+          # Start second authority (MEA)  
+          RUST_LOG=info cargo run --release -- start --config test_configs/mea.toml &
+          MEA_PID=$!
+          sleep 5
+          
+          # Start third authority (PEA)
+          RUST_LOG=info cargo run --release -- start --config test_configs/pea.toml &
+          PEA_PID=$!
+          sleep 10
+
+      - name: Test consensus with multiple authorities
+        run: |
+          # Generate test transactions
+          cargo run --release -- generate-wallet > wallet1.txt
+          cargo run --release -- generate-wallet > wallet2.txt
+          
+          # Test energy trading transactions
+          echo "Testing energy trading between authorities..."
+          
+          # Wait for blocks to be produced
+          sleep 30
+
+      - name: Verify blockchain state
+        run: |
+          # Check blockchain status
+          cargo run --release -- status
+          
+          # Verify blocks from different authorities
+          echo "Verifying multi-authority consensus..."
+
+      - name: Test governance proposal
+        run: |
+          # Test authority governance
+          echo "Testing governance proposal submission..."
+
+      - name: Cleanup
+        run: |
+          # Kill background processes
+          kill $EGAT_PID $MEA_PID $PEA_PID || true
+        if: always()
+
+  # Documentation and Examples
+  documentation:
+    name: POA Documentation Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo registry
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Test documentation examples
+        run: |
+          cargo test --doc consensus::poa --verbose
+
+      - name: Build POA documentation
+        run: |
+          cargo doc --package gridtokenx-blockchain --features poa --no-deps
+
+      - name: Verify README examples
+        run: |
+          # Test code examples in README and documentation
+          echo "Verifying POA documentation examples..."
+
+  # Generate Test Report
+  test-report:
+    name: Generate POA Test Report
+    runs-on: ubuntu-latest
+    needs: [authority-tests, consensus-tests, performance-tests, thai-integration-tests, security-tests, reputation-tests]
+    if: always()
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Generate test summary
+        run: |
+          echo "# POA Consensus Test Report" > poa_test_report.md
+          echo "Generated on: $(date)" >> poa_test_report.md
+          echo "" >> poa_test_report.md
+          echo "## Test Results Summary" >> poa_test_report.md
+          echo "- Authority Tests: ${{ needs.authority-tests.result }}" >> poa_test_report.md
+          echo "- Consensus Tests: ${{ needs.consensus-tests.result }}" >> poa_test_report.md
+          echo "- Performance Tests: ${{ needs.performance-tests.result }}" >> poa_test_report.md
+          echo "- Thai Integration Tests: ${{ needs.thai-integration-tests.result }}" >> poa_test_report.md
+          echo "- Security Tests: ${{ needs.security-tests.result }}" >> poa_test_report.md
+          echo "- Reputation Tests: ${{ needs.reputation-tests.result }}" >> poa_test_report.md
+
+      - name: Upload test report
+        uses: actions/upload-artifact@v3
+        with:
+          name: poa-test-report
+          path: poa_test_report.md

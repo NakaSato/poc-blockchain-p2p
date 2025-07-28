@@ -1,0 +1,55 @@
+# ERC Authority Node Configuration
+# Energy Regulatory Commission
+
+[network]
+node_id = "erc-authority-node"
+listen_address = "0.0.0.0:30303"
+bootstrap_peers = ["egat-node:30303", "mea-node:30303", "pea-node:30303"]
+network_id = "thai-energy-testnet"
+max_peers = 50
+
+[consensus]
+engine = "poa"
+authority_type = "ERC"
+block_time = 15  # seconds
+round_timeout = 30  # seconds
+max_validators = 10
+
+[authority]
+license_number = "ERC-2024-001"
+authority_name = "Energy Regulatory Commission"
+region = "National"
+capabilities = ["regulation", "oversight", "compliance", "tariff_setting"]
+contact_info = "info@erc.or.th"
+
+[api]
+http_port = 8080
+ws_port = 8545
+enable_cors = true
+cors_origins = ["*"]
+
+[storage]
+data_dir = "data"
+cache_size = 1024  # MB
+max_open_files = 1000
+
+[logging]
+level = "info"
+file_path = "logs/erc-node.log"
+max_file_size = "100MB"
+max_files = 10
+
+[metrics]
+enabled = true
+prometheus_port = 9000
+
+[governance]
+voting_period = 604800  # 1 week in seconds
+execution_delay = 86400  # 1 day in seconds
+min_participation = 0.6  # 60% minimum participation
+
+[energy]
+grid_zones = ["National"]
+trading_enabled = true
+settlement_period = 3600  # 1 hour in seconds
+regulatory_oversight = true

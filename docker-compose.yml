@@ -1,0 +1,191 @@
+version: '3.8'
+
+services:
+  # EGAT Authority Node
+  egat-node:
+    build: .
+    container_name: gridtokenx-egat
+    ports:
+      - "8080:8080"
+      - "8545:8545"
+      - "30303:30303"
+    volumes:
+      - egat_data:/app/data
+      - ./config/egat.toml:/app/config.toml
+    environment:
+      - RUST_LOG=info
+      - GRIDTOKEN_AUTHORITY_TYPE=EGAT
+      - GRIDTOKEN_NETWORK_ID=thai-energy-testnet
+    networks:
+      - gridtoken-network
+    healthcheck:
+      test: ["CMD", "gridtokenx-node", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # MEA Authority Node
+  mea-node:
+    build: .
+    container_name: gridtokenx-mea
+    ports:
+      - "8081:8080"
+      - "8546:8545"
+      - "30304:30303"
+    volumes:
+      - mea_data:/app/data
+      - ./config/mea.toml:/app/config.toml
+    environment:
+      - RUST_LOG=info
+      - GRIDTOKEN_AUTHORITY_TYPE=MEA
+      - GRIDTOKEN_NETWORK_ID=thai-energy-testnet
+      - GRIDTOKEN_BOOTSTRAP_PEERS=egat-node:30303
+    depends_on:
+      egat-node:
+        condition: service_healthy
+    networks:
+      - gridtoken-network
+    healthcheck:
+      test: ["CMD", "gridtokenx-node", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # PEA Authority Node
+  pea-node:
+    build: .
+    container_name: gridtokenx-pea
+    ports:
+      - "8082:8080"
+      - "8547:8545"
+      - "30305:30303"
+    volumes:
+      - pea_data:/app/data
+      - ./config/pea.toml:/app/config.toml
+    environment:
+      - RUST_LOG=info
+      - GRIDTOKEN_AUTHORITY_TYPE=PEA
+      - GRIDTOKEN_NETWORK_ID=thai-energy-testnet
+      - GRIDTOKEN_BOOTSTRAP_PEERS=egat-node:30303,mea-node:30303
+    depends_on:
+      egat-node:
+        condition: service_healthy
+      mea-node:
+        condition: service_healthy
+    networks:
+      - gridtoken-network
+    healthcheck:
+      test: ["CMD", "gridtokenx-node", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ERC Regulatory Node
+  erc-node:
+    build: .
+    container_name: gridtokenx-erc
+    ports:
+      - "8083:8080"
+      - "8548:8545"
+      - "30306:30303"
+    volumes:
+      - erc_data:/app/data
+      - ./config/erc.toml:/app/config.toml
+    environment:
+      - RUST_LOG=info
+      - GRIDTOKEN_AUTHORITY_TYPE=ERC
+      - GRIDTOKEN_NETWORK_ID=thai-energy-testnet
+      - GRIDTOKEN_BOOTSTRAP_PEERS=egat-node:30303,mea-node:30303,pea-node:30303
+    depends_on:
+      egat-node:
+        condition: service_healthy
+      mea-node:
+        condition: service_healthy
+      pea-node:
+        condition: service_healthy
+    networks:
+      - gridtoken-network
+    healthcheck:
+      test: ["CMD", "gridtokenx-node", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Monitoring and Metrics
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: gridtoken-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - gridtoken-network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: gridtoken-grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana-dashboards:/etc/grafana/provisioning/dashboards
+      - ./monitoring/grafana-datasources:/etc/grafana/provisioning/datasources
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=gridtoken123
+      - GF_USERS_ALLOW_SIGN_UP=false
+    depends_on:
+      - prometheus
+    networks:
+      - gridtoken-network
+
+  # Load Balancer for API access
+  nginx:
+    image: nginx:alpine
+    container_name: gridtoken-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/ssl:/etc/nginx/ssl
+    depends_on:
+      - egat-node
+      - mea-node
+      - pea-node
+      - erc-node
+    networks:
+      - gridtoken-network
+
+networks:
+  gridtoken-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  egat_data:
+    driver: local
+  mea_data:
+    driver: local
+  pea_data:
+    driver: local
+  erc_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
