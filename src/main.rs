@@ -14,7 +14,7 @@ mod config;
 mod storage;
 mod utils;
 
-use blockchain::{Block, Blockchain, Transaction, TransactionType};
+use blockchain::{Block, Blockchain, Transaction};
 use config::NodeConfig;
 use storage::StorageManager;
 
