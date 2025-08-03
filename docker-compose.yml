@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # EGAT Authority Node
   egat-node:

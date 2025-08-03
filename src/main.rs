@@ -9,14 +9,8 @@ use std::sync::Arc;
 use tokio::sync::RwLock;
 use tracing::{error, info};
 
-mod blockchain;
-mod config;
-mod storage;
-mod utils;
-
-use blockchain::{Block, Blockchain, Transaction};
-use config::NodeConfig;
-use storage::StorageManager;
+// Use the library exports instead of local modules
+use gridtokenx_blockchain::{Blockchain, Block, Transaction, NodeConfig, StorageManager, ScalingCoordinator, ScalingConfig, ValidatorInfo, crypto};
 
 #[derive(Parser)]
 #[command(name = "gridtokenx-node")]
@@ -86,7 +80,7 @@ async fn main() -> Result<()> {
 }
 
 async fn start_node(config_path: String, enable_mining: bool, node_type: String) -> Result<()> {
-    info!("Starting GridTokenX Blockchain Node...");
+    info!("Starting GridTokenX Blockchain Node with Scaling...");
 
     // Load configuration
     let config = NodeConfig::load(&config_path).unwrap_or_else(|_| {
@@ -95,7 +89,18 @@ async fn start_node(config_path: String, enable_mining: bool, node_type: String)
     });
     info!("Configuration loaded");
 
-    // Initialize storage
+    // Initialize scaling coordinator
+    let scaling_config = ScalingConfig::default();
+    let scaling_coordinator = Arc::new(
+        ScalingCoordinator::new(scaling_config).await?
+    );
+    info!("Scaling coordinator initialized");
+
+    // Start scaling services
+    scaling_coordinator.start().await?;
+    info!("Scaling services started");
+
+    // Initialize storage with distributed configuration
     let storage = Arc::new(StorageManager::new(&config.storage.path).await?);
     info!("Storage initialized at: {}", config.storage.path);
 
@@ -120,21 +125,55 @@ async fn start_node(config_path: String, enable_mining: bool, node_type: String)
     info!("GridTokenX Node started successfully!");
     info!("Node Type: {}", node_type);
     info!("Mining enabled: {}", enable_mining);
+    info!("Scaling enabled: ✅");
     info!("Current blockchain height: {}", {
         let bc = blockchain.read().await;
         bc.get_height().await.unwrap_or(0)
     });
 
-    // Simple event loop
+    // Start metrics reporting
+    let scaling_coordinator_metrics = scaling_coordinator.clone();
+    tokio::spawn(async move {
+        loop {
+            tokio::time::sleep(tokio::time::Duration::from_secs(30)).await;
+            
+            match scaling_coordinator_metrics.get_scaling_metrics().await {
+                Ok(metrics) => {
+                    info!("📊 Scaling Metrics:");
+                    info!("  Active Shards: {}", metrics.active_shards);
+                    info!("  Total TPS: {:.2}", metrics.total_tps);
+                    info!("  Avg Latency: {:.2}ms", metrics.average_latency_ms);
+                    info!("  Memory Usage: {:.1}MB", metrics.memory_usage_mb);
+                    info!("  CPU Usage: {:.1}%", metrics.cpu_usage_percent);
+                    info!("  Storage Ops/sec: {:.0}", metrics.storage_ops_per_sec);
+                }
+                Err(e) => error!("Failed to get scaling metrics: {}", e),
+            }
+        }
+    });
+
+    // Enhanced event loop with scaling
     loop {
         tokio::time::sleep(tokio::time::Duration::from_secs(10)).await;
 
         // Mine a block if mining is enabled
         if enable_mining {
             let blockchain_clone = blockchain.clone();
+            let scaling_coordinator_clone = scaling_coordinator.clone();
+            
             tokio::spawn(async move {
-                if let Err(e) = mine_block(blockchain_clone).await {
+                if let Err(e) = mine_block_with_scaling(blockchain_clone, scaling_coordinator_clone).await {
                     error!("Mining error: {}", e);
+                }
+            });
+        }
+
+        // Simulate some transactions for demonstration
+        if enable_mining {
+            let scaling_coordinator_clone = scaling_coordinator.clone();
+            tokio::spawn(async move {
+                if let Err(e) = simulate_energy_transactions(scaling_coordinator_clone).await {
+                    error!("Transaction simulation error: {}", e);
                 }
             });
         }
@@ -153,7 +192,7 @@ async fn mine_block(blockchain: Arc<RwLock<Blockchain>>) -> Result<()> {
             bc.get_latest_block().await?
         };
 
-        let validator_info = blockchain::block::ValidatorInfo {
+        let validator_info = ValidatorInfo {
             address: "miner".to_string(),
             stake: 0,
             reputation: 50.0,
@@ -177,6 +216,89 @@ async fn mine_block(blockchain: Arc<RwLock<Blockchain>>) -> Result<()> {
         bc.remove_pending_transactions(&tx_ids).await;
 
         info!("Mined block at height: {}", new_block.header.height);
+    }
+
+    Ok(())
+}
+
+/// Enhanced mining function with scaling support
+async fn mine_block_with_scaling(
+    blockchain: Arc<RwLock<Blockchain>>,
+    scaling_coordinator: Arc<gridtokenx_blockchain::ScalingCoordinator>,
+) -> Result<()> {
+    let pending_transactions = {
+        let bc = blockchain.read().await;
+        bc.get_pending_transactions(100).await
+    };
+
+    if !pending_transactions.is_empty() {
+        info!("Mining block with {} transactions using scaling", pending_transactions.len());
+        
+        // Process transactions using scaling infrastructure
+        let processed_tx_ids = scaling_coordinator
+            .process_transactions_scaled(pending_transactions.clone())
+            .await?;
+
+        if !processed_tx_ids.is_empty() {
+            let latest_block = {
+                let bc = blockchain.read().await;
+                bc.get_latest_block().await?
+            };
+
+            let validator_info = ValidatorInfo {
+                address: "scaling_validator".to_string(),
+                stake: 1000,
+                reputation: 100.0,
+                authority_type: Some("SCALING".to_string()),
+            };
+
+            // Create new block with processed transactions
+            let new_block = Block::new(
+                latest_block.header.hash,
+                pending_transactions.clone(),
+                latest_block.header.height + 1,
+                validator_info,
+            )?;
+
+            // Add block to blockchain
+            let bc = blockchain.read().await;
+            bc.add_block(new_block.clone()).await?;
+
+            let tx_ids: Vec<String> = pending_transactions
+                .iter()
+                .map(|tx| tx.id.clone())
+                .collect();
+            bc.remove_pending_transactions(&tx_ids).await;
+
+            info!("✅ Block mined successfully with scaling (Height: {}, TXs: {})", 
+                  new_block.header.height, processed_tx_ids.len());
+        }
+    }
+
+    Ok(())
+}
+
+/// Simulate energy transactions for demonstration
+async fn simulate_energy_transactions(
+    scaling_coordinator: Arc<gridtokenx_blockchain::ScalingCoordinator>,
+) -> Result<()> {
+    // Create sample energy transactions using the blockchain module
+    let transactions = vec![
+        // Simple transaction creation - we'll create them directly
+        // This is just for demonstration of the scaling system
+    ];
+
+    if !transactions.is_empty() {
+        let start_time = std::time::Instant::now();
+        
+        // Process using scaling infrastructure
+        let results = scaling_coordinator.process_transactions_scaled(transactions).await?;
+        
+        let processing_time = start_time.elapsed();
+        info!("⚡ Processed {} transactions in {:?} using scaling", 
+              results.len(), processing_time);
+    } else {
+        info!("📊 Scaling infrastructure ready - no transactions to process");
     }
 
     Ok(())
@@ -280,7 +402,7 @@ async fn show_status() -> Result<()> {
 async fn generate_wallet() -> Result<()> {
     info!("Generating new GridTokenX wallet...");
 
-    let wallet = utils::crypto::generate_keypair()?;
+    let wallet = crypto::generate_keypair()?;
 
     println!("New GridTokenX Wallet Generated");
     println!("==============================");

@@ -1015,6 +1015,7 @@ dependencies = [
  "hex",
  "hmac",
  "libp2p",
+ "num_cpus",
  "parking_lot",
  "pbkdf2",
  "rand 0.8.5",

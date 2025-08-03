@@ -15,7 +15,7 @@ pub mod block;
 pub mod chain;
 pub mod transaction;
 
-pub use block::Block;
+pub use block::{Block, ValidatorInfo};
 pub use chain::Blockchain;
 pub use transaction::{EnergyTransaction, GovernanceTransaction, Transaction, TransactionType};
 

@@ -36,8 +36,47 @@ pub struct NodeConfig {
     pub security: SecurityConfig,
     /// Logging configuration
     pub logging: LoggingConfig,
+        /// Thai market specific settings
     /// Thai market specific settings
     pub thai_market: ThaiMarketConfig,
+    /// Scaling configuration
+    pub scaling: ScalingConfig,
+}
+
+/// Scaling configuration for the GridTokenX node
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ScalingConfig {
+    /// Enable sharding
+    pub enable_sharding: bool,
+    /// Enable parallel processing
+    pub enable_parallel_processing: bool,
+    /// Maximum number of worker threads
+    pub max_worker_threads: usize,
+    /// Transaction batch size for parallel processing
+    pub batch_size: usize,
+    /// Enable auto-scaling
+    pub enable_auto_scaling: bool,
+    /// Maximum shards per region
+    pub max_shards_per_region: usize,
+    /// Enable distributed storage
+    pub enable_distributed_storage: bool,
+    /// Cache size for scaling in MB
+    pub cache_size_mb: usize,
+}
+
+impl Default for ScalingConfig {
+    fn default() -> Self {
+        Self {
+            enable_sharding: true,
+            enable_parallel_processing: true,
+            max_worker_threads: 8, // Default to 8 threads
+            batch_size: 100,
+            enable_auto_scaling: true,
+            max_shards_per_region: 3,
+            enable_distributed_storage: true,
+            cache_size_mb: 256,
+        }
+    }
 }
 
 /// Node types in the GridTokenX network
@@ -668,6 +707,7 @@ impl Default for NodeConfig {
             security: SecurityConfig::default(),
             logging: LoggingConfig::default(),
             thai_market: ThaiMarketConfig::default(),
+            scaling: ScalingConfig::default(),
         }
     }
 }

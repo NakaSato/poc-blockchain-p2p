@@ -41,12 +41,14 @@ pub mod blockchain;
 pub mod config;
 pub mod storage;
 pub mod utils;
+pub mod scaling;
 
 // Re-export commonly used types
-pub use blockchain::{Block, Blockchain, Transaction, TransactionType};
+pub use blockchain::{Block, Blockchain, Transaction, TransactionType, ValidatorInfo};
 pub use config::NodeConfig;
 pub use storage::StorageManager;
 pub use utils::{crypto, EnergyConversion, ThaiEnergyMarket, Utils};
+pub use scaling::{ScalingCoordinator, ScalingConfig, ScalingMetrics};
 
 /// Library version
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
