@@ -58,9 +58,28 @@ parking_lot = "0.12"
 [dev-dependencies]
 tokio-test = "0.4"
 
+# Testing and performance dependencies
+criterion = { version = "0.5", features = ["html_reports"] }
+futures = "0.3"
+crossterm = "0.27"
+chrono = { version = "0.4", features = ["serde"] }
+
 [[bin]]
 name = "gridtokenx-node"
 path = "src/main.rs"
+
+# Performance testing binaries (disabled until dependencies are fixed)
+# [[bin]]
+# name = "perf_test"
+# path = "src/bin/perf_test.rs"
+
+# [[bin]]
+# name = "scaling_monitor"
+# path = "src/bin/scaling_monitor.rs"
+
+[[bench]]
+name = "blockchain_performance"
+harness = false
 
 [profile.release]
 opt-level = 3
