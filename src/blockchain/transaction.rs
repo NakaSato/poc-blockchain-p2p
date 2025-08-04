@@ -67,6 +67,26 @@ pub enum TransactionType {
         method: String,
         args: Vec<String>,
     },
+    /// IoT device energy measurement
+    EnergyMeasurement {
+        device_id: String,
+        energy_consumed: f64,
+        energy_produced: f64,
+        instantaneous_power: f64,
+        energy_source: String,
+        location: String,
+        timestamp: DateTime<Utc>,
+        quality_metrics: Option<EnergyQualityMetrics>,
+    },
+    /// IoT device registration
+    DeviceRegistration {
+        device_id: String,
+        device_type: String,
+        location: String,
+        grid_operator: String,
+        capabilities: Vec<String>,
+        firmware_version: Option<String>,
+    },
 }
 
 /// Energy trading specific transaction data
