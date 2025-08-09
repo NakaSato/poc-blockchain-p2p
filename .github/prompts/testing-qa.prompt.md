@@ -1,23 +1,48 @@
 ---
 mode: edit
+type: quality-assurance
+focus: testing-strategy
+priority: critical
+tags: [testing, qa, compliance, performance, security, rust, thailand]
 ---
 
-# GridTokenX Testing and Quality Assurance Prompt
+# 🧪 GridTokenX Testing & Quality Assurance Guide
 
-You are developing comprehensive testing strategies for GridTokenX - Thailand's energy trading blockchain platform ensuring reliability, security, and performance.
+> **Ensuring Thailand's Energy Infrastructure Reliability**  
+> Comprehensive testing strategies for mission-critical energy trading platform that powers Thailand's electrical grid.
 
-## Testing Architecture Overview
+## 🎯 Testing Philosophy
 
-The testing system ensures:
-- **Functional Correctness**: All features work as specified
-- **Performance Requirements**: Meet SLA requirements for energy trading
-- **Security Validation**: Protect against attacks and vulnerabilities
-- **Regulatory Compliance**: Meet Thai energy market requirements
-- **Grid Integration**: Safe operation with Thailand's electrical grid
+You are developing **mission-critical infrastructure** for Thailand's energy sector. Every component must be tested thoroughly to ensure:
+- ⚡ Grid stability and energy conservation
+- 🏛️ Regulatory compliance with Thai energy laws
+- 🔒 Security against attacks and manipulation
+- 📈 Performance under peak trading loads
+- 🌍 Real-world integration with energy authorities
 
-## Test Structure Organization
+### 🏗️ **Testing Architecture**
+```
+🧪 Testing Strategy Pyramid:
+                    🔺
+                   /   \
+                  / E2E \      ← Few, high-value end-to-end tests
+                 /_______\
+                /         \
+               / Integration \   ← Integration with authorities & grid
+              /_______________\
+             /                 \
+            /    Unit Tests     \  ← Many, fast domain logic tests
+           /___________________\
+          /                     \
+         /   Property-Based      \   ← Verification of energy laws
+        /_______________________\
+```
 
-### Test Categories
+## 🔬 Core Testing Categories
+
+### 1️⃣ **Domain Logic Testing** (`tests/unit/`)
+
+#### **Energy Conservation Validation**
 ```rust
 // Test directory structure
 tests/

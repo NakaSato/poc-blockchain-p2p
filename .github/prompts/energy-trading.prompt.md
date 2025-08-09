@@ -1,66 +1,228 @@
 ---
 mode: edit
+type: domain-specific
+domain: energy-trading
+priority: critical
+tags: [energy-trading, market, orders, grid, thailand, ddd, rust]
 ---
 
-# GridTokenX Energy Trading System Development Prompt
+# 🏪 GridTokenX Energy Trading System Development Guide
 
-You are developing the energy trading module for GridTokenX - Thailand's peer-to-peer energy trading blockchain platform.
+> **Powering Thailand's Energy Marketplace**  
+> Expert guidance for developing the core energy trading domain that revolutionizes peer-to-peer energy exchange.
 
-## Energy Trading System Overview
+## 🎯 Domain Focus: Energy Trading
 
-The energy trading system (`src/energy.rs`) implements real-time energy market operations with blockchain integration:
+You are developing the **Energy Trading Domain** - the heart of GridTokenX that enables secure, efficient, and regulatory-compliant energy transactions across Thailand's electrical grid.
 
-### Core Components
-1. **EnergyTrading**: Main trading system coordinator
-2. **GridManager**: Grid monitoring and congestion management
-3. **EnergyOrderBook**: Buy/sell order matching system
-4. **TradingEngine**: Advanced order matching algorithms
-
-## Energy Market Mechanics
-
-### Order Types
-```rust
-pub enum OrderType {
-    Market,           // Execute immediately at market price
-    Limit(u64),      // Execute at specific price or better
-    GridBalancing,   // System-generated grid balancing orders
-    Emergency,       // Critical grid stability orders
-}
+### 🏗️ **Domain-Driven Architecture**
+```
+src/domains/energy_trading/
+├── domain/
+│   ├── entities/           # EnergyOrder, Trade, Market, Trader
+│   ├── value_objects/      # Price, EnergyAmount, TradingWindow, GridLocation
+│   ├── aggregates/         # OrderBook, TradingSession, MarketDepth
+│   └── services/          # OrderMatchingService, PriceDiscoveryService
+├── application/
+│   ├── commands/          # PlaceOrder, CancelOrder, ExecuteTrade
+│   ├── queries/           # GetMarketDepth, GetOrderHistory, GetPricing
+│   └── services/          # EnergyTradingApplicationService
+└── infrastructure/
+    ├── persistence/       # OrderRepository, TradeRepository
+    ├── grid_integration/  # GridStateAdapter, AuthorityNotification
+    └── pricing/           # PricingEngineAdapter, MarketDataProvider
 ```
 
-### Energy Units and Pricing
-- **Base Unit**: 1 kWh = 1 GridToken (GT)
-- **Pricing**: Dynamic based on supply/demand and grid conditions
-- **Time Slots**: 15-minute trading intervals aligned with grid operations
-- **Location**: Grid node-specific pricing for congestion management
+## ⚡ Energy Trading Business Logic
 
-### Order Matching Algorithm
-1. **Price-Time Priority**: Best price first, then earliest timestamp
-2. **Grid Constraints**: Respect transmission capacity limits
-3. **Authority Override**: Grid operators can insert emergency orders
-4. **Renewable Priority**: Bonus matching for certified renewable energy
-
-## Thai Energy Market Integration
-
-### Authority Integration
-- **EGAT**: Transmission system operator, wholesale market oversight
-- **MEA/PEA**: Distribution operators, retail market participation
-- **NEPO**: Policy compliance and market monitoring
-- **ERC**: Regulatory oversight and dispute resolution
-
-### Market Compliance
-```rust
-pub struct MarketCompliance {
-    pub energy_act_compliance: bool,    // Energy Trading Act B.E. 2562
-    pub erc_registration: String,       // ERC license number
-    pub nepo_reporting: bool,          // NEPO data submission
-    pub grid_code_compliance: bool,    // Technical grid standards
-}
+### 🔄 **Order Lifecycle Management**
+#### **Order States & Transitions**
+```
+🔄 Order Lifecycle:
+📝 Created → ✅ Validated → 📋 Active → ⚡ Executing → ✨ Completed
+              ↓             ↓           ↓
+              ❌ Rejected   🚫 Cancelled 🔄 Partially Filled
 ```
 
-### Time-of-Use Pricing
-- **Peak Hours**: 09:00-22:00 (higher rates)
-- **Off-Peak Hours**: 22:00-09:00 (lower rates)
+#### **Order Types & Business Rules**
+| Order Type | Use Case | Priority | Grid Impact |
+|------------|----------|----------|-------------|
+| **Market** | Immediate execution | High | Real-time grid response |
+| **Limit** | Price-specific trades | Normal | Planned grid allocation |
+| **GridBalancing** | System stability | Critical | Automatic grid correction |
+| **Emergency** | Crisis response | Highest | Override all constraints |
+
+### ⚖️ **Energy Conservation & Validation**
+```
+🔬 Energy Physics Enforcement:
+├── 🔋 Energy cannot be created or destroyed
+├── ⚡ Total input = Total output + Transmission losses
+├── 🌍 Grid capacity constraints must be respected
+├── 📊 Real-time energy balance validation
+└── 🚨 Reject trades violating conservation laws
+```
+
+### 💰 **Pricing & Market Dynamics**
+
+#### **Value Objects**
+- **Price**: Satoshi per kWh with min/max bounds validation
+- **EnergyAmount**: kWh with precision and realistic limits
+- **GridLocation**: Thai grid coordinates with distance calculations
+- **TradingWindow**: 15-minute intervals aligned with grid operations
+
+#### **Dynamic Pricing Factors**
+```
+💱 Price Discovery Algorithm:
+├── 📊 Supply/Demand ratio (primary factor)
+├── 🕘 Time-of-use patterns (peak vs off-peak)
+├── 🌍 Geographic congestion (transmission costs)
+├── 🌱 Renewable energy premiums/discounts
+├── 🏛️ Authority-mandated pricing floors/ceilings
+└── ⚡ Real-time grid stability requirements
+```
+
+## 🇹🇭 Thai Energy Market Integration
+
+### 🏛️ **Authority Coordination**
+| Authority | Role | Trading Privileges | Validation Requirements |
+|-----------|------|-------------------|-------------------------|
+| **EGAT** | Transmission operator | Emergency grid orders, wholesale oversight | Multi-signature validation |
+| **MEA** | Bangkok distribution | Metro area order validation | Geographic bounds check |
+| **PEA** | Provincial distribution | Rural/provincial oversight | License verification |
+| **ERC** | Market regulator | Dispute resolution, compliance | Regulatory compliance check |
+
+### 📊 **Market Compliance & Regulatory Integration**
+
+#### **Compliance Validation**
+- ✅ Energy Trading Act B.E. 2562 (2019) compliance
+- ✅ ERC license verification for all participants  
+- ✅ NEPO real-time reporting integration
+- ✅ Thai Grid Code technical standards
+- ✅ Authority-mandated pricing constraints
+
+#### **Time-of-Use Integration**
+```
+⏰ Thai Market Timing:
+🌅 Peak Hours: 09:00-22:00 (premium rates)
+🌙 Off-Peak: 22:00-09:00 (discounted rates)
+🌡️ Seasonal: Mar-May hot season (surge pricing)
+📍 Regional: Zone-specific congestion pricing
+```
+
+## 🏗️ Domain Services & Application Layer
+
+### 🔧 **Domain Services** (`domain/services/`)
+
+#### **OrderMatchingService**
+```
+🎯 Matching Algorithm:
+├── 1️⃣ Price-time priority (best price wins)
+├── 2️⃣ Grid constraint validation (capacity limits)
+├── 3️⃣ Authority override handling (emergency orders)
+├── 4️⃣ Renewable energy prioritization (green bonus)
+└── 5️⃣ Geographic optimization (transmission efficiency)
+```
+
+#### **PriceDiscoveryService**
+- Real-time supply/demand analysis
+- Grid congestion impact calculation
+- Authority pricing constraint enforcement
+- Renewable energy premium/discount application
+
+#### **GridConstraintService**
+- Transmission capacity validation
+- Grid stability impact assessment
+- Authority emergency protocol integration
+- Real-time grid state monitoring
+
+### 🚀 **Application Services** (`application/services/`)
+
+#### **EnergyTradingApplicationService**
+- Order placement and validation orchestration
+- Trade execution and settlement coordination
+- Authority notification and compliance reporting
+- Market data aggregation and distribution
+
+### 📝 **Commands & Queries**
+
+#### **Commands** (`application/commands/`)
+- `PlaceEnergyOrder`: Create new buy/sell order with validation
+- `CancelOrder`: Cancel active order with grid impact check
+- `ExecuteTrade`: Complete matched trade with settlement
+- `HandleGridEmergency`: Process authority emergency protocols
+
+#### **Queries** (`application/queries/`)
+- `GetMarketDepth`: Current buy/sell order book state
+- `GetOrderHistory`: Trader's historical order activity
+- `GetPricingData`: Real-time and historical pricing information
+- `GetGridImpact`: Trading impact on grid stability
+
+## 🔄 Trading Aggregates & Business Rules
+
+### 🏪 **OrderBook Aggregate**
+```
+📊 OrderBook Responsibilities:
+├── 📋 Maintain buy/sell order collections
+├── ⚖️ Enforce price-time priority matching
+├── 🚨 Validate grid capacity constraints
+├── 💱 Execute automated trade matching
+├── 📊 Update market depth calculations
+└── 🔔 Emit trade execution events
+```
+
+### 💼 **TradingSession Aggregate**
+- Session-based trading coordination (15-minute windows)
+- Authority override and emergency protocol handling
+- Cross-border energy transfer validation
+- Settlement and blockchain transaction coordination
+
+### 📈 **MarketDepth Aggregate**
+- Real-time order book depth calculation
+- Price impact analysis for large orders
+- Liquidity assessment and market maker incentives
+- Historical market data aggregation
+
+## 🧪 Testing Strategy
+
+### 🔬 **Domain Testing**
+- **Energy Conservation Tests**: Verify all trades maintain energy balance
+- **Grid Constraint Tests**: Validate capacity and stability limits
+- **Authority Integration Tests**: Ensure proper privilege enforcement
+- **Market Manipulation Tests**: Protect against unfair trading practices
+
+### 🎭 **Integration Testing**
+- **Real-time Grid Integration**: Live grid data validation
+- **Authority System Integration**: MEA/PEA/EGAT coordination
+- **Blockchain Settlement**: End-to-end trade recording
+- **Performance Testing**: Peak hour trading load handling
+
+## 📚 Key Implementation Patterns
+
+### 🎯 **Repository Pattern**
+- **OrderRepository**: Persistent order storage and querying
+- **TradeRepository**: Trade history and settlement tracking
+- **MarketDataRepository**: Historical pricing and market data
+
+### 📨 **Domain Events**
+- **OrderPlaced**: New order entered into system
+- **OrderMatched**: Successful order matching
+- **TradeExecuted**: Completed energy transfer
+- **GridConstraintViolation**: Invalid trade attempt
+- **AuthorityOverride**: Emergency authority intervention
+
+### 🔧 **Anti-Corruption Layer**
+- **GridSystemAdapter**: Interface to Thai grid infrastructure
+- **AuthorityNotificationAdapter**: Real-time authority integration
+- **BlockchainAdapter**: Energy transaction recording
+- **PricingEngineAdapter**: External market data integration
+
+---
+
+## 🎯 Implementation Focus Areas
+
+> **Start with**: Order lifecycle and basic matching algorithm
+> **Critical**: Grid constraint validation and authority integration
+> **Remember**: Every trade must respect energy physics and Thai market regulations
 - **Seasonal Adjustments**: Hot season (Mar-May) premium
 - **Grid Congestion Multipliers**: Location-based pricing
 

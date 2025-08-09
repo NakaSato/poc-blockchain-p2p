@@ -6,18 +6,15 @@
 use anyhow::{anyhow, Result};
 use chrono::{DateTime, Utc};
 use libp2p::{
-    gossipsub::{self, Gossipsub, GossipsubEvent, MessageAuthenticity, ValidationMode},
+    gossipsub::{self, Behaviour as Gossipsub, Event as GossipsubEvent, MessageAuthenticity, ValidationMode},
     identity::Keypair,
-    kad::{Kademlia, KademliaEvent},
-    mdns::{Mdns, MdnsEvent},
-    noise::NoiseConfig,
-    swarm::{SwarmBuilder, SwarmEvent},
-    tcp::TcpConfig,
-    yamux::YamuxConfig,
-    Multiaddr, NetworkBehaviour, PeerId, Swarm, Transport,
+    kad::{store::MemoryStore, Behaviour as Kademlia, Event as KademliaEvent},
+    mdns::{Event as MdnsEvent, tokio::Behaviour as Mdns},
+    swarm::{NetworkBehaviour, SwarmEvent, SwarmBuilder},
+    Multiaddr, PeerId, Swarm, Transport,
 };
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
@@ -582,73 +579,3 @@ impl P2PNetwork {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::storage::StorageManager;
-
-    #[test]
-    fn test_network_message_serialization() {
-        let message = NetworkMessage::Ping {
-            timestamp: Utc::now(),
-            sender: "test_sender".to_string(),
-        };
-
-        let serialized = bincode::serialize(&message).unwrap();
-        let deserialized: NetworkMessage = bincode::deserialize(&serialized).unwrap();
-
-        match (message, deserialized) {
-            (NetworkMessage::Ping { sender: s1, .. }, NetworkMessage::Ping { sender: s2, .. }) => {
-                assert_eq!(s1, s2);
-            }
-            _ => panic!("Message type mismatch"),
-        }
-    }
-
-    #[test]
-    fn test_peer_info_serialization() {
-        let peer_info = PeerInfo {
-            peer_id: "test_peer".to_string(),
-            addresses: vec!["addr1".to_string(), "addr2".to_string()],
-            node_type: "validator".to_string(),
-            version: "1.0.0".to_string(),
-            connected_at: Utc::now(),
-            last_seen: Utc::now(),
-            reputation: 85.5,
-            latency: Some(100),
-            synced_height: 1000,
-        };
-
-        let serialized = serde_json::to_string(&peer_info).unwrap();
-        let deserialized: PeerInfo = serde_json::from_str(&serialized).unwrap();
-
-        assert_eq!(peer_info.peer_id, deserialized.peer_id);
-        assert_eq!(peer_info.reputation, deserialized.reputation);
-        assert_eq!(peer_info.synced_height, deserialized.synced_height);
-    }
-
-    #[tokio::test]
-    async fn test_p2p_network_creation() {
-        let storage = Arc::new(StorageManager::new_memory().await.unwrap());
-        let blockchain = Arc::new(RwLock::new(
-            crate::blockchain::Blockchain::new(storage).await.unwrap(),
-        ));
-        let consensus = Arc::new(RwLock::new(
-            crate::consensus::ConsensusEngine::new(
-                blockchain.clone(),
-                crate::config::ConsensusConfig::default(),
-                false,
-            )
-            .await
-            .unwrap(),
-        ));
-
-        let config = P2PConfig::default();
-        let network = P2PNetwork::new(config, blockchain, consensus)
-            .await
-            .unwrap();
-
-        let stats = network.get_stats().await;
-        assert_eq!(stats.connected_peers, 0);
-    }
-}

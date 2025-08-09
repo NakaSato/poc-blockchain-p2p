@@ -1,95 +1,142 @@
 ---
 mode: ask
+type: master-guide
+priority: high
+tags: [gridtokenx, blockchain, energy-trading, thailand, ddd, rust]
 ---
 
-# GridTokenX Master Development Prompt
+# 🚀 GridTokenX Master Development Guide
 
-You are the lead developer for GridTokenX - Thailand's revolutionary peer-to-peer energy trading blockchain platform. This master prompt provides comprehensive guidance for all aspects of the system.
+> **Leading Thailand's Energy Trading Revolution**  
+> Expert development guidance for GridTokenX - the pioneering peer-to-peer energy trading blockchain platform transforming Thailand's electricity market.
 
-## Project Overview
+## 🌟 Project Vision & Context
 
-GridTokenX is a hybrid blockchain platform that enables direct energy trading between producers and consumers in Thailand, featuring:
-- **1:1 Token-Energy Ratio**: 1 kWh = 1 GridToken (GT)
+GridTokenX represents a revolutionary leap in Thailand's energy infrastructure, combining cutting-edge blockchain technology with real-world energy trading:
+
+### 🔋 **Core Innovation**
+- **1:1 Token-Energy Ratio**: 1 kWh = 1 GridToken (GT) - absolute transparency
 - **Hybrid Consensus**: Proof of Authority (PoA) with Thai energy authorities (EGAT, MEA, PEA)
 - **Real-Time Grid Integration**: Live grid monitoring and congestion management
 - **Regulatory Compliance**: Full compliance with Thai energy regulations
-- **Renewable Energy Focus**: Carbon tracking and sustainability incentives
+- **Renewable Focus**: Carbon tracking and sustainability incentives
+- **DDD Architecture**: Domain-Driven Design for maintainable, scalable code
 
-## Available Specialized Prompts
+### 🏛️ **Authority Ecosystem**
+| Authority | Role | Responsibility |
+|-----------|------|----------------|
+| **EGAT** | Transmission | Electricity Generating Authority of Thailand |
+| **MEA** | Distribution | Metropolitan Electricity Authority (Bangkok) |
+| **PEA** | Distribution | Provincial Electricity Authority |
+| **NEPO** | Policy | National Energy Policy Office |
+| **ERC** | Regulation | Energy Regulatory Commission |
 
-For specific development tasks, refer to these specialized prompts:
+## 📋 Available Specialized Prompts
 
-### Core System Components
-- **blockchain-core.prompt.md**: Blockchain fundamentals, blocks, transactions, and chain management
-- **consensus-system.prompt.md**: Hybrid PoA consensus with authority node integration
-- **energy-trading.prompt.md**: Energy market operations, order matching, and grid management
-- **p2p-network.prompt.md**: libp2p networking, peer discovery, and message routing
-- **storage-system.prompt.md**: RocksDB integration, data persistence, and backup strategies
-- **governance-system.prompt.md**: DAO features, voting mechanisms, and regulatory integration
+For specific development tasks, leverage these specialized domain-focused prompts:
 
-### API and Integration
-- **api-development.prompt.md**: REST API, WebSocket feeds, and authority integrations
-- **config-utils.prompt.md**: Configuration management and utility functions
+### 🔧 **Core System Components**
+| Prompt | Focus Area | Use Case |
+|--------|------------|----------|
+| `blockchain-core.prompt.md` | 🔗 Blockchain fundamentals | Blocks, transactions, chain management |
+| `consensus-system.prompt.md` | ⚡ Hybrid PoA consensus | Authority node integration, validation |
+| `energy-trading.prompt.md` | 🏪 Energy marketplace | Order matching, grid management |
+| `p2p-network.prompt.md` | 🌐 Network infrastructure | libp2p, peer discovery, routing |
+| `storage-system.prompt.md` | 💾 Data persistence | RocksDB, backup strategies |
+| `governance-system.prompt.md` | 🗳️ DAO governance | Voting, regulatory integration |
 
-### Quality Assurance
-- **testing-qa.prompt.md**: Comprehensive testing strategies and quality assurance
+### 🔌 **Integration & Quality**
+| Prompt | Focus Area | Use Case |
+|--------|------------|----------|
+| `api-development.prompt.md` | 🚀 REST/WebSocket APIs | Authority integrations, real-time feeds |
+| `config-utils.prompt.md` | ⚙️ Configuration | Environment management, utilities |
+| `testing-qa.prompt.md` | 🧪 Quality assurance | Testing strategies, compliance validation |
 
-## Thai Energy Market Context
+## 🇹🇭 Thai Energy Market Intelligence
 
-### Key Authorities
-- **EGAT**: Electricity Generating Authority of Thailand (Transmission)
-- **MEA**: Metropolitan Electricity Authority (Bangkok Distribution)
-- **PEA**: Provincial Electricity Authority (Provincial Distribution)
-- **NEPO**: National Energy Policy Office (Policy)
-- **ERC**: Energy Regulatory Commission (Market Oversight)
+### 📊 **Market Dynamics**
+```
+🕘 Peak Hours: 9 AM - 10 PM (premium rates)
+🌡️  Seasonal: Hot season (Mar-May) demand surge
+🗺️  Grid Zones: Bangkok | Central | North | Northeast | East | West | South
+⚡ Grid Standard: 50 Hz with tight tolerance requirements
+```
 
-### Regulatory Framework
-- Energy Trading Act B.E. 2562 (2019)
-- Thai Grid Code compliance
-- Real-time reporting requirements
-- License verification for all participants
+### 📋 **Regulatory Framework**
+- ✅ Energy Trading Act B.E. 2562 (2019)
+- ✅ Thai Grid Code compliance
+- ✅ Real-time reporting requirements
+- ✅ License verification for all participants
 
-### Market Characteristics
-- Peak Hours: 9 AM - 10 PM (higher rates)
-- Seasonal Variations: Hot season (Mar-May) premium
-- Regional Grid Zones: Bangkok, Central, North, Northeast, East, West, South
-- Grid Frequency: 50 Hz standard with tight tolerance
+## 🎯 Development Excellence Principles
 
-## Development Principles
+### ⚡ **Performance Standards**
+| Metric | Target | Critical For |
+|--------|--------|--------------|
+| **Trading TPS** | 1,000+ | Peak hour operations |
+| **Order Latency** | <100ms | Real-time trading |
+| **Grid Updates** | <1s | Grid stability |
+| **Uptime** | 99.99% | Critical infrastructure |
+| **Node Scale** | 10,000+ | Thailand-wide deployment |
 
-### Performance Requirements
-- **Trading Performance**: 1000+ TPS during peak hours
-- **Latency**: <100ms for order processing, <1s for grid updates
-- **Availability**: 99.99% uptime for critical infrastructure
-- **Scalability**: Support 10,000+ nodes across Thailand
+### 🔒 **Security Imperatives**
+- 🛡️ Cryptographic verification of all energy measurements
+- 🔐 Authority node authentication and signature validation
+- 🚨 Protection against market manipulation and attacks
+- 🔗 Secure integration with Thai grid infrastructure
 
-### Security Priorities
-- Cryptographic verification of all energy measurements
-- Authority node authentication and signature validation
-- Protection against market manipulation and attacks
-- Secure integration with Thai grid infrastructure
-
-### Energy Conservation Laws
-- Total energy in = total energy out + transmission losses
-- Real-time validation of energy balance
-- Prevention of energy double-spending
+### ⚖️ **Energy Conservation Laws**
+```
+Energy Conservation = Input Energy = Output Energy + Transmission Losses
+- Real-time validation of energy balance equations
+- Prevention of energy double-spending scenarios
 - Grid stability constraints enforcement
+- Physics-based validation rules
+```
 
-## Quick Start Development Guide
+## 🚀 Quick Start Development Workflow
 
-1. **Choose Your Focus Area**: Select the appropriate specialized prompt based on your task
-2. **Understand Thai Context**: Consider regulatory requirements and market characteristics
-3. **Follow Energy Laws**: Ensure all implementations respect energy conservation principles
-4. **Integrate with Authorities**: Design for seamless EGAT/MEA/PEA integration
-5. **Test Thoroughly**: Use comprehensive testing strategies from testing-qa.prompt.md
+### 1. 🎯 **Choose Your Domain**
+Select the appropriate specialized prompt based on your current task and domain focus.
 
-## Cross-Component Integration
+### 2. 🇹🇭 **Understand Thai Context** 
+Consider regulatory requirements, market characteristics, and cultural factors.
 
-When working across multiple components:
-- **Blockchain ↔ Energy Trading**: Energy transactions must be recorded on-chain
+### 3. ⚖️ **Respect Energy Laws**
+Ensure all implementations follow energy conservation principles and physics.
+
+### 4. 🏛️ **Authority Integration**
+Design for seamless EGAT/MEA/PEA integration and regulatory compliance.
+
+### 5. 🧪 **Test Comprehensively**
+Use rigorous testing strategies from `testing-qa.prompt.md` for reliability.
+
+## 🔄 Cross-Component Integration Patterns
+
+### 🔗 **Integration Matrix**
+```
+┌─────────────────┬─────────────────┬─────────────────┐
+│ Blockchain ↔ Energy Trading │ Grid ↔ Consensus │
+│ On-chain energy transactions │ Authority privileges │
+├─────────────────┼─────────────────┼─────────────────┤
+│ P2P ↔ Grid Mgmt │ Storage ↔ All │ API ↔ External │
+│ Real-time data │ Persistent data │ Authority APIs │
+└─────────────────┴─────────────────┴─────────────────┘
+```
+
+### 🎯 **Key Integration Points**
+- **Blockchain ↔ Energy Trading**: Energy transactions recorded on-chain with full audit trail
 - **Consensus ↔ Authority Integration**: Authority nodes have special consensus privileges
-- **P2P ↔ Grid Management**: Real-time grid data propagation through network
-- **Storage ↔ All Components**: Persistent storage for all system data
+- **P2P ↔ Grid Management**: Real-time grid data propagation through network layer
+- **Storage ↔ All Components**: Persistent storage for all system data and state
 - **API ↔ External Systems**: Integration endpoints for Thai energy authorities
 
-Use this master prompt as your starting point, then dive into the specialized prompts for detailed implementation guidance. Always consider the Thai energy market context and regulatory requirements in your development decisions.
+---
+
+## 🎓 Usage Guidelines
+
+> **Start Here**: Use this master prompt as your foundation, then dive into specialized prompts for detailed implementation guidance.
+> 
+> **Always Consider**: Thai energy market context, regulatory requirements, and Domain-Driven Design principles in all development decisions.
+> 
+> **Key Focus**: Maintainable, scalable, and compliant code that serves Thailand's energy transformation.

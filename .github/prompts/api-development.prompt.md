@@ -1,23 +1,50 @@
 ---
 mode: edit
+type: infrastructure
+layer: interfaces
+priority: high
+tags: [api, rest, websocket, warp, integration, thailand, rust]
 ---
 
-# GridTokenX API Development Prompt
+# 🚀 GridTokenX API Development Guide
 
-You are developing the REST API interface for GridTokenX - Thailand's energy trading blockchain platform using Warp for high-performance web services.
+> **Connecting Thailand's Energy Revolution**  
+> Expert guidance for developing high-performance REST and WebSocket APIs that integrate GridTokenX with Thailand's energy ecosystem.
 
-## API Architecture Overview
+## 🎯 API Architecture Overview
 
-The API system (`src/api.rs`) provides:
-- **RESTful Services**: Standard HTTP/JSON endpoints for all platform features
-- **Real-Time WebSocket**: Live energy trading and grid status updates
-- **High Performance**: 10,000+ concurrent connections during peak trading
-- **Security**: Authentication, authorization, and rate limiting
-- **Thai Market Integration**: Specialized endpoints for energy authorities
+You are developing the **Interfaces Layer** - the gateway that connects external systems, mobile apps, and energy authorities to GridTokenX's core domain services through secure, high-performance APIs.
 
-## API Structure and Routing
+### 🏗️ **Clean Architecture Integration**
+```
+🌐 API Layer (Interfaces)
+├── 🔗 REST Endpoints          # HTTP/JSON for standard operations
+├── ⚡ WebSocket Feeds         # Real-time trading and grid updates
+├── 🏛️ Authority Integration   # Specialized endpoints for EGAT/MEA/PEA
+├── 📱 Mobile APIs            # Optimized for mobile energy trading apps
+└── 🔒 Authentication Hub      # OAuth2 + Thai digital ID integration
 
-### Core API Categories
+    ↕️ depends on ↕️
+
+🎯 Application Layer (Use Cases)
+├── 🏪 Energy Trading Services
+├── ⛓️ Blockchain Services  
+├── 🗳️ Governance Services
+└── 🌐 Grid Management Services
+```
+
+## 🚀 High-Performance API Design
+
+### ⚡ **Performance Requirements**
+| Metric | Target | Use Case |
+|--------|--------|----------|
+| **Concurrent Users** | 10,000+ | Peak trading hours |
+| **Order Response** | <100ms | Real-time energy trading |
+| **WebSocket Updates** | <50ms | Grid state changes |
+| **Throughput** | 1000+ RPS | Market data queries |
+| **Uptime** | 99.99% | Critical energy infrastructure |
+
+### 🛡️ **Security & Authentication**
 ```rust
 use warp::{Filter, Reply, Rejection};
 use serde::{Deserialize, Serialize};

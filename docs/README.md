@@ -13,11 +13,18 @@ A revolutionary blockchain-based platform that enables peer-to-peer energy tradi
 
 ## 🏗️ Architecture
 
-GridTokenX uses a hybrid consensus mechanism that combines:
+GridTokenX is built using **Domain-Driven Design (DDD)** principles with a modular architecture that combines:
 
-- **Proof of Stake (PoS)**: For regular transactions and network governance
-- **Proof of Work (PoW)**: For energy transaction validation and grid stability
+### Consensus Mechanisms
+- **Proof of Authority (PoA)**: Primary consensus for energy trading validation
+- **Proof of Stake (PoS)**: For regular transactions and network governance  
 - **Authority Nodes**: Integration with Thai energy authorities (EGAT, MEA, PEA)
+
+### DDD Architecture Layers
+- **Domain Layer**: Core business logic and energy trading rules
+- **Application Layer**: CQRS with command/query handlers and event buses
+- **Infrastructure Layer**: Storage, networking, and external system integrations
+- **Shared Kernel**: Common types, errors, and cross-cutting concerns
 
 ## 🚀 Quick Start
 
@@ -175,6 +182,37 @@ GridTokenX features a robust governance system allowing token holders to:
   --new-value "0.7"
 ```
 
+## 🏛️ Domain-Driven Design (DDD) Architecture
+
+GridTokenX implements a robust DDD architecture that provides clear separation of concerns and maintainable code structure:
+
+### 🎯 Shared Kernel
+- **Domain Errors**: Centralized error handling with `DomainError`
+- **Domain Events**: Event-driven architecture with `DomainEvent` trait
+- **Repository Pattern**: Abstract data access with `AggregateRoot` and `Repository`
+- **CQRS Buses**: Command, Query, and Event buses for clean application flow
+
+### 🔄 Bounded Contexts
+
+#### Energy Trading Domain
+- **Value Objects**: `TradeId`, `TraderId`, `EnergyAmount`, `PricePerKwh`, `TradingWindow`
+- **Entities**: `EnergyOrder` and `EnergyTrade` with complete lifecycle management
+- **Aggregates**: `OrderBook` aggregate ensuring trading invariants
+- **Domain Services**: `EnergyTradingDomainService` containing core business logic
+
+### 📋 Application Patterns
+- **Command Handlers**: Process trading commands with validation
+- **Event Sourcing**: Track all domain events for audit and replay
+- **Repository Pattern**: Clean data access abstraction
+- **Anti-Corruption Layer**: Protect domain from external dependencies
+
+### ⚙️ Migration Strategy
+The project uses the **Strangler Fig pattern** to gradually migrate from legacy code to DDD:
+- ✅ **Phase 1**: Shared kernel and domain foundation - COMPLETED
+- ✅ **Phase 2**: Energy trading domain implementation - COMPLETED  
+- 🔄 **Phase 3**: Grid management and governance domains - IN PROGRESS
+- 📋 **Phase 4**: Complete legacy system retirement - PLANNED
+
 ## 🔋 Energy Trading
 
 ### Order Types
@@ -224,34 +262,126 @@ cargo build
 # Release build with optimizations
 cargo build --release
 
-# Run tests
+# Run tests (including DDD domain tests)
 cargo test
 
 # Run with debug logging
 RUST_LOG=debug cargo run
+
+# Check code quality
+cargo clippy
+cargo fmt --check
+
+# Build documentation
+cargo doc --open
 ```
+
+### DDD Development Guidelines
+
+#### Adding New Domains
+1. Create new bounded context in `src/domains/`
+2. Define domain entities and value objects
+3. Implement aggregates with business invariants
+4. Add domain services for complex business logic
+5. Create application command/query handlers
+6. Write comprehensive domain tests
+
+#### Domain Layer Rules
+- **Entities**: Must have identity and lifecycle
+- **Value Objects**: Immutable with validation
+- **Aggregates**: Enforce business invariants
+- **Domain Services**: Stateless business logic
+- **Events**: Capture domain state changes
+
+#### Application Layer Patterns
+- Use CQRS for read/write separation
+- Implement command handlers for writes
+- Use query handlers for reads  
+- Publish domain events for integration
 
 ### Project Structure
 
 ```
-blockchain/
+poc-blockchain-p2p/
 ├── src/
 │   ├── main.rs              # Main entry point
+│   ├── lib.rs               # Library exports and DDD module organization
 │   ├── api.rs               # REST API server
-│   ├── blockchain/          # Core blockchain logic
-│   │   ├── mod.rs
-│   │   ├── block.rs         # Block structure
-│   │   ├── chain.rs         # Blockchain management
-│   │   └── transaction.rs   # Transaction types
-│   ├── consensus.rs         # Consensus algorithms
-│   ├── energy.rs            # Energy trading system
-│   ├── governance.rs        # Governance system
+│   ├── config.rs            # Configuration management
+│   ├── utils.rs             # Utility functions
 │   ├── p2p.rs              # P2P networking
 │   ├── storage.rs          # Data persistence
-│   ├── config.rs           # Configuration management
-│   └── utils.rs            # Utility functions
-├── config.toml             # Default configuration
-└── Cargo.toml             # Rust dependencies
+│   ├── consensus.rs        # Consensus algorithms (PoA)
+│   ├── energy.rs           # Legacy energy trading (being migrated)
+│   ├── governance.rs       # Governance system
+│   │
+│   ├── shared/             # 🎯 DDD Shared Kernel
+│   │   ├── mod.rs
+│   │   ├── domain/         # Domain primitives
+│   │   │   ├── errors.rs   # Domain error types
+│   │   │   ├── events.rs   # Domain events
+│   │   │   ├── repository.rs # Repository patterns
+│   │   │   └── value_objects.rs # Shared value objects
+│   │   ├── application/    # Application layer patterns
+│   │   │   ├── command_bus.rs # CQRS command bus
+│   │   │   ├── query_bus.rs   # CQRS query bus
+│   │   │   └── event_bus.rs   # Event-driven architecture
+│   │   └── infrastructure/ # Infrastructure abstractions
+│   │       ├── logging.rs  # Logging abstractions
+│   │       ├── network.rs  # Network abstractions
+│   │       └── storage.rs  # Storage abstractions
+│   │
+│   ├── domains/            # 🎯 DDD Bounded Contexts
+│   │   ├── mod.rs
+│   │   └── energy_trading/ # Energy Trading Domain
+│   │       ├── mod.rs
+│   │       ├── tests.rs    # Domain tests
+│   │       ├── domain/     # Domain layer
+│   │       │   ├── mod.rs
+│   │       │   ├── value_objects.rs # Trade IDs, amounts, prices
+│   │       │   ├── entities/       # Domain entities
+│   │       │   │   ├── mod.rs
+│   │       │   │   ├── energy_order.rs # Energy order entity
+│   │       │   │   └── energy_trade.rs # Energy trade entity
+│   │       │   ├── aggregates/     # Aggregate roots
+│   │       │   │   ├── mod.rs
+│   │       │   │   └── order_book.rs # Order book aggregate
+│   │       │   └── services/       # Domain services
+│   │       │       ├── mod.rs
+│   │       │       └── energy_trading_service.rs
+│   │       ├── application/        # Application layer
+│   │       │   ├── mod.rs
+│   │       │   └── commands/       # Command handlers
+│   │       │       ├── mod.rs
+│   │       │       └── place_energy_order.rs
+│   │       └── infrastructure/     # Infrastructure layer
+│   │           ├── mod.rs
+│   │           └── repositories/   # Repository implementations
+│   │
+│   ├── blockchain/         # Core blockchain logic
+│   │   ├── mod.rs
+│   │   ├── block.rs        # Block structure
+│   │   ├── chain.rs        # Blockchain management
+│   │   └── transaction.rs  # Transaction types
+│   │
+│   ├── consensus_poa/      # Proof of Authority consensus
+│   │   ├── mod.rs
+│   │   └── poa.rs         # PoA implementation
+│   │
+│   └── scaling/           # Scaling solutions
+│       ├── mod.rs
+│       ├── sharding.rs    # Sharding implementation
+│       └── sharding_complex.rs # Advanced sharding
+│
+├── config/                 # Environment-specific configs
+│   ├── egat.toml          # EGAT authority configuration
+│   ├── erc.toml           # ERC authority configuration  
+│   ├── mea.toml           # MEA authority configuration
+│   └── pea.toml           # PEA authority configuration
+├── docs/                  # Documentation
+├── config.toml            # Default configuration
+├── Cargo.toml             # Rust dependencies
+└── DDD_MIGRATION_PLAN.md  # DDD migration documentation
 ```
 
 ### Testing
@@ -260,12 +390,28 @@ blockchain/
 # Run all tests
 cargo test
 
-# Run specific test module
+# Run specific domain tests
+cargo test domains::energy_trading::tests
+
+# Run shared kernel tests  
+cargo test shared::
+
+# Run blockchain core tests
 cargo test blockchain::tests
 
 # Run with coverage
 cargo tarpaulin --out Html
+
+# Run DDD domain tests specifically
+cargo test test_energy_trading_domain_service_creation
+cargo test test_place_energy_order_command
 ```
+
+### Test Organization
+- **Unit Tests**: Domain logic and value object validation
+- **Integration Tests**: Cross-domain interactions and API endpoints
+- **Domain Tests**: Business rule validation and aggregate behavior
+- **Repository Tests**: Data persistence and retrieval patterns
 
 ## 🚀 Deployment
 
@@ -401,19 +547,27 @@ For enterprise support and custom implementations, contact: enterprise@gridtoken
 - P2P networking
 - Web API
 
-### Phase 2 (Q2 2024) - Integration 🔄
+### Phase 2 (Q2 2024) - DDD Architecture ✅
+- Domain-Driven Design implementation
+- Shared kernel and bounded contexts
+- Energy trading domain with CQRS
+- Event-driven architecture
+- Comprehensive test suite
+
+### Phase 3 (Q3 2024) - Integration 🔄
 - Thai grid operator integration
 - Smart contract platform
 - Mobile applications
 - Regulatory compliance tools
+- Additional domain contexts (Grid, Governance)
 
-### Phase 3 (Q3 2024) - Scaling
+### Phase 4 (Q4 2024) - Scaling
 - Sharding implementation
 - Cross-chain bridges
 - Advanced analytics
 - AI-powered grid optimization
 
-### Phase 4 (Q4 2024) - Ecosystem
+### Phase 5 (Q1 2025) - Ecosystem
 - DeFi integrations
 - Carbon credit marketplace
 - IoT device integration

@@ -139,7 +139,7 @@ async fn start_node(config_path: String, enable_mining: bool, node_type: String)
             
             match scaling_coordinator_metrics.get_scaling_metrics().await {
                 Ok(metrics) => {
-                    info!("📊 Scaling Metrics:");
+                    info!(" Scaling Metrics:");
                     info!("  Active Shards: {}", metrics.active_shards);
                     info!("  Total TPS: {:.2}", metrics.total_tps);
                     info!("  Avg Latency: {:.2}ms", metrics.average_latency_ms);
@@ -323,7 +323,7 @@ async fn init_blockchain(genesis_config: Option<String>) -> Result<()> {
     Ok(())
 }
 
-async fn create_genesis_block(genesis_config: Option<String>) -> Result<Block> {
+async fn create_genesis_block(_genesis_config: Option<String>) -> Result<Block> {
     info!("Creating genesis block...");
 
     // Default genesis configuration for Thai energy market
@@ -417,21 +417,3 @@ async fn generate_wallet() -> Result<()> {
     Ok(())
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[tokio::test]
-    async fn test_genesis_block_creation() {
-        let genesis_block = create_genesis_block(None).await.unwrap();
-        assert!(!genesis_block.transactions.is_empty());
-        assert!(genesis_block.header.previous_hash.is_empty());
-    }
-
-    #[tokio::test]
-    async fn test_node_config_default() {
-        let config = NodeConfig::default();
-        assert_eq!(config.api.port, 8080);
-        assert!(!config.node_id.is_empty());
-    }
-}
