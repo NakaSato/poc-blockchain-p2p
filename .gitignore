@@ -29,6 +29,15 @@ data/
 # Documentation build
 docs/_build/
 
+# Terraform files
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfplan
+terraform.rc
+.terraformrc
+
 # Planning documents (optional - uncomment to include in git)
 # POA_CONSENSUS_PLAN.md
 # POA_TECHNICAL_SPEC.md
