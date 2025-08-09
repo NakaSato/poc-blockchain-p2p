@@ -1,6 +1,6 @@
 //! Comprehensive tests for POA consensus functionality
 
-use crate::consensus::{ConsensusEngine, POAConsensusEngine, Authority, ThaiAuthorityType};
+use crate::consensus_poa::{POAConsensusEngine, Authority, ThaiAuthorityType};
 use crate::blockchain::{Block, Transaction, ValidatorInfo};
 use chrono::Utc;
 use anyhow::Result;

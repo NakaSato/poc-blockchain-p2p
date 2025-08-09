@@ -2,7 +2,7 @@
 
 use crate::governance::{GovernanceSystem, Proposal, Vote, ProposalType, ProposalStatus};
 use crate::blockchain::{Transaction, Block};
-use crate::consensus::{Authority, ThaiAuthorityType};
+use crate::consensus_poa::{Authority, ThaiAuthorityType};
 use chrono::{Utc, Duration};
 use anyhow::Result;
 

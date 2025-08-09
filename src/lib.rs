@@ -37,17 +37,27 @@
 //! }
 //! ```
 
+pub mod api;
 pub mod blockchain;
 pub mod config;
 pub mod storage;
 pub mod utils;
 pub mod scaling;
+pub mod energy;
+pub mod governance;
+pub mod p2p;
+pub mod consensus;
 
 // Re-export commonly used types
 pub use blockchain::{Block, Blockchain, Transaction, TransactionType, ValidatorInfo};
-pub use config::NodeConfig;
+pub use config::{NodeConfig, ApiConfig, GridConfig, P2PConfig, ConsensusConfig};
 pub use storage::StorageManager;
 pub use utils::{crypto, EnergyConversion, ThaiEnergyMarket, Utils};
+pub use api::ApiServer;
+pub use energy::{EnergyTrading, GridManager};
+pub use governance::GovernanceSystem;
+pub use p2p::P2PNetwork;
+pub use consensus::ConsensusEngine;
 pub use scaling::{ScalingCoordinator, ScalingConfig, ScalingMetrics};
 
 /// Library version

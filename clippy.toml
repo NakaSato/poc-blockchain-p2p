@@ -1,0 +1,54 @@
+# GridTokenX Code Quality Configuration
+
+# Clippy lints configuration for enhanced code quality
+[lints.clippy]
+# Enable all clippy lint groups
+all = "warn"
+pedantic = "warn"
+nursery = "warn"
+cargo = "warn"
+
+# Specific lints for blockchain/crypto projects
+arithmetic_side_effects = "deny"
+integer_overflow = "deny"
+panic = "deny"
+unwrap_used = "deny"
+expect_used = "warn"
+indexing_slicing = "warn"
+missing_docs_in_private_items = "warn"
+
+# Performance lints
+perf = "warn"
+clone_on_ref_ptr = "warn"
+large_types_passed_by_value = "warn"
+
+# Style lints
+style = "warn"
+cognitive_complexity = "warn"
+too_many_arguments = "warn"
+too_many_lines = "warn"
+
+# Complexity lints
+complexity = "warn"
+cyclomatic_complexity = "warn"
+
+# Correctness lints (these are usually deny by default)
+correctness = "deny"
+
+# Allow certain lints that might be too restrictive for our use case
+module_name_repetitions = "allow"
+similar_names = "allow"
+single_match_else = "allow"
+
+[lints.rust]
+# Rust built-in lints
+missing_docs = "warn"
+unused_imports = "warn"
+unused_variables = "warn"
+dead_code = "warn"
+unreachable_code = "warn"
+deprecated = "warn"
+
+# Security-related lints
+unsafe_code = "warn"
+non_ascii_idents = "deny"

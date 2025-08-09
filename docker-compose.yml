@@ -1,5 +1,5 @@
 services:
-  # EGAT Authority Node
+  # EGAT Authority Node (Bootstrap node - not scalable)
   egat-node:
     image: gridtokenx-blockchain:latest
     container_name: gridtokenx-egat
@@ -16,23 +16,15 @@ services:
       - GRIDTOKEN_NETWORK_ID=thai-energy-testnet
     networks:
       - gridtoken-network
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
 
-  # MEA Authority Node
+  # MEA Authority Node (scalable)
   mea-node:
     image: gridtokenx-blockchain:latest
-    container_name: gridtokenx-mea
-    ports:
-      - "8081:8080"
-      - "8546:8545"
-      - "30304:30303"
+    expose:
+      - "8080"
+      - "8545"
+      - "30303"
     volumes:
-      - mea_data:/app/data
       - ./config/mea.toml:/app/config/mea.toml
     environment:
       - RUST_LOG=info
@@ -40,46 +32,28 @@ services:
       - GRIDTOKEN_NETWORK_ID=thai-energy-testnet
       - GRIDTOKEN_BOOTSTRAP_PEERS=egat-node:30303
     depends_on:
-      egat-node:
-        condition: service_healthy
+      - egat-node
     networks:
       - gridtoken-network
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
 
-  # PEA Authority Node
+  # PEA Authority Node (scalable)
   pea-node:
     image: gridtokenx-blockchain:latest
-    container_name: gridtokenx-pea
-    ports:
-      - "8082:8080"
-      - "8547:8545"
-      - "30305:30303"
+    expose:
+      - "8080"
+      - "8545"
+      - "30303"
     volumes:
-      - pea_data:/app/data
       - ./config/pea.toml:/app/config/pea.toml
     environment:
       - RUST_LOG=info
       - GRIDTOKEN_AUTHORITY_TYPE=PEA
       - GRIDTOKEN_NETWORK_ID=thai-energy-testnet
-      - GRIDTOKEN_BOOTSTRAP_PEERS=egat-node:30303,mea-node:30303
+      - GRIDTOKEN_BOOTSTRAP_PEERS=egat-node:30303
     depends_on:
-      egat-node:
-        condition: service_healthy
-      mea-node:
-        condition: service_healthy
+      - egat-node
     networks:
       - gridtoken-network
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
 
   # ERC Regulatory Node
   erc-node:
@@ -96,22 +70,11 @@ services:
       - RUST_LOG=info
       - GRIDTOKEN_AUTHORITY_TYPE=ERC
       - GRIDTOKEN_NETWORK_ID=thai-energy-testnet
-      - GRIDTOKEN_BOOTSTRAP_PEERS=egat-node:30303,mea-node:30303,pea-node:30303
+      - GRIDTOKEN_BOOTSTRAP_PEERS=egat-node:30303
     depends_on:
-      egat-node:
-        condition: service_healthy
-      mea-node:
-        condition: service_healthy
-      pea-node:
-        condition: service_healthy
+      - egat-node
     networks:
       - gridtoken-network
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
 
   # Monitoring and Metrics
   prometheus:

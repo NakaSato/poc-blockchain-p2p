@@ -2,7 +2,7 @@
 
 use crate::energy::*;
 use crate::blockchain::{Transaction, Block};
-use crate::consensus::{Authority, ThaiAuthorityType};
+use crate::consensus_poa::{Authority, ThaiAuthorityType};
 use chrono::{Utc, Duration};
 use std::collections::HashMap;
 use anyhow::Result;

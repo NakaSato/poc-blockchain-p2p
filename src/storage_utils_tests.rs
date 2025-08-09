@@ -3,7 +3,7 @@
 use crate::storage::*;
 use crate::utils::*;
 use crate::blockchain::{Block, Transaction};
-use crate::consensus::Authority;
+use crate::consensus_poa::Authority;
 use std::collections::HashMap;
 use chrono::{Utc, Duration};
 use anyhow::Result;
@@ -521,7 +521,7 @@ mod utils_tests {
 mod integration_tests {
     use super::*;
     use crate::blockchain::Blockchain;
-    use crate::consensus::{ThaiAuthorityType, Authority};
+    use crate::consensus_poa::{ThaiAuthorityType, Authority};
 
     #[tokio::test]
     async fn test_full_system_integration() -> Result<()> {

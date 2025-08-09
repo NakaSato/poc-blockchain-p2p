@@ -1,0 +1,170 @@
+name: GridTokenX Quality Pipeline
+
+on:
+  push:
+    branches: [ master, develop ]
+  pull_request:
+    branches: [ master, develop ]
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: -Dwarnings
+
+jobs:
+  quality-comprehensive:
+    name: Comprehensive Quality Checks
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Rust toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        components: rustfmt, clippy
+        override: true
+        
+    - name: Cache cargo dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+        
+    - name: Install quality tools
+      run: |
+        cargo install cargo-audit || true
+        cargo install cargo-deny || true
+        cargo install cargo-tarpaulin || true
+        cargo install tokei || true
+        
+    - name: Run comprehensive QA checks
+      run: |
+        chmod +x qa-check.sh
+        ./qa-check.sh --verbose
+        
+    - name: Generate quality metrics
+      run: |
+        echo "## Quality Metrics" > quality-metrics.md
+        echo "Date: $(date)" >> quality-metrics.md
+        echo "" >> quality-metrics.md
+        
+        echo "### Code Statistics" >> quality-metrics.md
+        if command -v tokei &> /dev/null; then
+          tokei --sort code >> quality-metrics.md
+        fi
+        
+        echo "" >> quality-metrics.md
+        echo "### Test Coverage" >> quality-metrics.md
+        if command -v cargo-tarpaulin &> /dev/null; then
+          cargo tarpaulin --skip-clean --out stdout >> quality-metrics.md || true
+        fi
+        
+    - name: Upload quality metrics
+      uses: actions/upload-artifact@v3
+      with:
+        name: quality-metrics
+        path: quality-metrics.md
+
+  security-focused:
+    name: Security Quality Assurance
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Rust toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        override: true
+        
+    - name: Install security tools
+      run: |
+        cargo install cargo-audit
+        cargo install cargo-deny
+        
+    - name: Security audit
+      run: cargo audit
+      
+    - name: Dependency security check
+      run: cargo deny check
+      
+    - name: Check for unsafe code
+      run: |
+        echo "Checking for unsafe code blocks:"
+        find src -name "*.rs" -exec grep -l "unsafe" {} \; || echo "No unsafe code found"
+
+  performance-quality:
+    name: Performance Quality Assessment
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Rust toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        override: true
+        
+    - name: Build benchmarks
+      run: cargo bench --no-run
+      
+    - name: Performance test
+      run: |
+        if [ -f "performance-test.sh" ]; then
+          chmod +x performance-test.sh
+          ./performance-test.sh
+        fi
+
+  blockchain-specific-quality:
+    name: Blockchain Quality Checks
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Rust toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        override: true
+        
+    - name: Build project
+      run: cargo build --release
+      
+    - name: Start test network
+      run: |
+        if [ -f "docker-compose.yml" ]; then
+          docker-compose up -d
+          sleep 30
+        fi
+        
+    - name: Blockchain functionality tests
+      run: |
+        if [ -f "test-blockchain.sh" ]; then
+          chmod +x test-blockchain.sh
+          ./test-blockchain.sh
+        fi
+        
+    - name: Transaction quality tests  
+      run: |
+        if [ -f "test-transactions.sh" ]; then
+          chmod +x test-transactions.sh
+          ./test-transactions.sh
+        fi
+        
+    - name: Cleanup
+      if: always()
+      run: |
+        if [ -f "docker-compose.yml" ]; then
+          docker-compose down
+        fi
