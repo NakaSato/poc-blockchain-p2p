@@ -1,0 +1,27 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  # - "rules/*.yml"
+
+scrape_configs:
+  - job_name: 'gridtoken-blockchain'
+    static_configs:
+      - targets: 
+          - 'egat-node:8080'
+          - 'mea-node:8080'
+          - 'pea-node:8080'
+          - 'erc-node:8080'
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'nginx'
+    static_configs:
+      - targets: ['nginx:80']
+    metrics_path: '/metrics'
+    scrape_interval: 60s

@@ -1,7 +1,7 @@
 services:
   # EGAT Authority Node
   egat-node:
-    build: .
+    image: gridtokenx-blockchain:latest
     container_name: gridtokenx-egat
     ports:
       - "8080:8080"
@@ -9,7 +9,7 @@ services:
       - "30303:30303"
     volumes:
       - egat_data:/app/data
-      - ./config/egat.toml:/app/config.toml
+      - ./config/egat.toml:/app/config/egat.toml
     environment:
       - RUST_LOG=info
       - GRIDTOKEN_AUTHORITY_TYPE=EGAT
@@ -17,7 +17,7 @@ services:
     networks:
       - gridtoken-network
     healthcheck:
-      test: ["CMD", "gridtokenx-node", "status"]
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -25,7 +25,7 @@ services:
 
   # MEA Authority Node
   mea-node:
-    build: .
+    image: gridtokenx-blockchain:latest
     container_name: gridtokenx-mea
     ports:
       - "8081:8080"
@@ -33,7 +33,7 @@ services:
       - "30304:30303"
     volumes:
       - mea_data:/app/data
-      - ./config/mea.toml:/app/config.toml
+      - ./config/mea.toml:/app/config/mea.toml
     environment:
       - RUST_LOG=info
       - GRIDTOKEN_AUTHORITY_TYPE=MEA
@@ -45,7 +45,7 @@ services:
     networks:
       - gridtoken-network
     healthcheck:
-      test: ["CMD", "gridtokenx-node", "status"]
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -53,7 +53,7 @@ services:
 
   # PEA Authority Node
   pea-node:
-    build: .
+    image: gridtokenx-blockchain:latest
     container_name: gridtokenx-pea
     ports:
       - "8082:8080"
@@ -61,7 +61,7 @@ services:
       - "30305:30303"
     volumes:
       - pea_data:/app/data
-      - ./config/pea.toml:/app/config.toml
+      - ./config/pea.toml:/app/config/pea.toml
     environment:
       - RUST_LOG=info
       - GRIDTOKEN_AUTHORITY_TYPE=PEA
@@ -75,7 +75,7 @@ services:
     networks:
       - gridtoken-network
     healthcheck:
-      test: ["CMD", "gridtokenx-node", "status"]
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -83,7 +83,7 @@ services:
 
   # ERC Regulatory Node
   erc-node:
-    build: .
+    image: gridtokenx-blockchain:latest
     container_name: gridtokenx-erc
     ports:
       - "8083:8080"
@@ -91,7 +91,7 @@ services:
       - "30306:30303"
     volumes:
       - erc_data:/app/data
-      - ./config/erc.toml:/app/config.toml
+      - ./config/erc.toml:/app/config/erc.toml
     environment:
       - RUST_LOG=info
       - GRIDTOKEN_AUTHORITY_TYPE=ERC
@@ -107,7 +107,7 @@ services:
     networks:
       - gridtoken-network
     healthcheck:
-      test: ["CMD", "gridtokenx-node", "status"]
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
