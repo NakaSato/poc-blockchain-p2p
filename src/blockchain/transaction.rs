@@ -543,7 +543,7 @@ impl Transaction {
     }
 
     /// Verify transaction signature
-    pub fn verify_signature(&self, public_key: &[u8]) -> Result<bool> {
+    pub fn verify_signature(&self, _public_key: &[u8]) -> Result<bool> {
         if self.signature.is_empty() {
             return Ok(false);
         }

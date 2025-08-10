@@ -13,7 +13,7 @@ use tokio::sync::RwLock;
 
 /// Main scaling coordinator that manages scaling operations
 pub struct ScalingCoordinator {
-    config: ScalingConfig,
+    _config: ScalingConfig,
     metrics: Arc<RwLock<ScalingMetrics>>,
     is_running: Arc<RwLock<bool>>,
 }
@@ -29,7 +29,7 @@ impl ScalingCoordinator {
         info!("Scaling coordinator initialized successfully");
         
         Ok(Self {
-            config,
+            _config: config,
             metrics,
             is_running,
         })

@@ -3,12 +3,10 @@
 //! This module implements the core blockchain functionality for the GridTokenX
 //! peer-to-peer energy trading platform in Thailand's electricity market.
 
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
-use std::collections::HashMap;
-use std::sync::Arc;
 use uuid::Uuid;
 
 pub mod block;
@@ -238,7 +236,7 @@ pub mod utils {
     pub fn validate_thai_energy_compliance(
         transaction: &Transaction,
         producer_type: &AccountType,
-        consumer_type: &AccountType,
+        _consumer_type: &AccountType,
     ) -> ValidationResult {
         match transaction.transaction_type {
             TransactionType::EnergyTrade(ref energy_tx) => {

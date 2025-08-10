@@ -180,48 +180,7 @@ async fn start_node(config_path: String, enable_mining: bool, node_type: String)
     }
 }
 
-async fn mine_block(blockchain: Arc<RwLock<Blockchain>>) -> Result<()> {
-    let pending_transactions = {
-        let bc = blockchain.read().await;
-        bc.get_pending_transactions(100).await
-    };
-
-    if !pending_transactions.is_empty() {
-        let latest_block = {
-            let bc = blockchain.read().await;
-            bc.get_latest_block().await?
-        };
-
-        let validator_info = ValidatorInfo {
-            address: "miner".to_string(),
-            stake: 0,
-            reputation: 50.0,
-            authority_type: Some("MINER".to_string()),
-        };
-
-        let new_block = Block::new(
-            latest_block.header.hash,
-            pending_transactions.clone(),
-            latest_block.header.height + 1,
-            validator_info,
-        )?;
-
-        let bc = blockchain.read().await;
-        bc.add_block(new_block.clone()).await?;
-
-        let tx_ids: Vec<String> = pending_transactions
-            .iter()
-            .map(|tx| tx.id.clone())
-            .collect();
-        bc.remove_pending_transactions(&tx_ids).await;
-
-        info!("Mined block at height: {}", new_block.header.height);
-    }
-
-    Ok(())
-}
-
-/// Enhanced mining function with scaling support
+/// mining function with scaling support
 async fn mine_block_with_scaling(
     blockchain: Arc<RwLock<Blockchain>>,
     scaling_coordinator: Arc<gridtokenx_blockchain::ScalingCoordinator>,

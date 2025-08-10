@@ -136,7 +136,7 @@ impl Utils {
     pub fn secure_random_bytes(length: usize) -> Vec<u8> {
         use rand::RngCore;
         let mut bytes = vec![0u8; length];
-        rand::thread_rng().fill_bytes(&mut bytes);
+        rand::rng().fill_bytes(&mut bytes);
         bytes
     }
 
@@ -244,7 +244,7 @@ pub mod crypto {
     pub fn generate_keypair() -> Result<Wallet> {
         // Generate 32-byte keys for simplicity
         let mut private_key = vec![0u8; 32];
-        rand::thread_rng().fill_bytes(&mut private_key);
+        rand::rng().fill_bytes(&mut private_key);
 
         // Generate public key (simplified - in real implementation would use actual crypto)
         let mut public_key = vec![0u8; 32];
