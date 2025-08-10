@@ -1,23 +1,23 @@
-//! Bounded Contexts
+//! Domain Modules
 //!
-//! This module contains all the bounded contexts (domains) in the GridTokenX system.
-//! Each bounded context represents a specific business domain with its own
-//! ubiquitous language and clear boundaries.
+//! This module contains all bounded contexts in the GridTokenX system.
+//! Each bounded context represents a cohesive business domain with its own
+//! entities, value objects, aggregates, and services.
 
 pub mod energy_trading;
+pub mod governance;
 
-// Re-export main domain types for convenience
+// Re-export commonly used types from each domain
 pub use energy_trading::{
-    // Core trading types
-    EnergyOrder, EnergyTrade, OrderBook, EnergyTradingDomainService,
-    
-    // Value objects
-    TradeId, TraderId, EnergyAmount, PricePerKwh, TradeType, TradeStatus, TradingWindow,
-    
-    // Application layer
+    EnergyOrder, OrderBook, EnergyTrade,
     PlaceEnergyOrderCommand, PlaceEnergyOrderHandler,
-    CancelEnergyOrderCommand, CancelEnergyOrderHandler,
-    GetMarketDepthQuery, GetMarketDepthHandler,
+    EnergyTradingDomainService,
+};
+
+pub use governance::{
+    GovernanceToken, StakePosition, RECToken,
+    StakingService, IncentiveMechanismService, RECMarketplaceService,
+    TokenAmount, VotingPower,
 };
 
 // Future domains to be implemented:

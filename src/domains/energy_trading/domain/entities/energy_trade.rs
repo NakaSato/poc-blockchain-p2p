@@ -38,6 +38,7 @@ impl std::fmt::Display for SettlementStatus {
 }
 
 /// Energy Trade Entity
+#[derive(Serialize, Deserialize)]
 pub struct EnergyTrade {
     id: TradeId,
     buyer_id: TraderId,
@@ -49,7 +50,26 @@ pub struct EnergyTrade {
     executed_at: DateTime<Utc>,
     settled_at: Option<DateTime<Utc>>,
     version: u64,
+    #[serde(skip)]
     uncommitted_events: VecDeque<Box<dyn DomainEvent>>,
+}
+
+impl Clone for EnergyTrade {
+    fn clone(&self) -> Self {
+        Self {
+            id: self.id.clone(),
+            buyer_id: self.buyer_id.clone(),
+            seller_id: self.seller_id.clone(),
+            energy_amount: self.energy_amount.clone(),
+            price_per_kwh: self.price_per_kwh.clone(),
+            total_price: self.total_price,
+            settlement_status: self.settlement_status.clone(),
+            executed_at: self.executed_at,
+            settled_at: self.settled_at,
+            version: self.version,
+            uncommitted_events: VecDeque::new(), // Don't clone events
+        }
+    }
 }
 
 impl EnergyTrade {
