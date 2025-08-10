@@ -15,14 +15,22 @@
 //! - **Regulatory Compliance**: Full compliance with Thai energy regulations
 
 // Core blockchain modules
+pub mod api;
 pub mod blockchain;
 pub mod config;
+pub mod energy;
+pub mod governance;
+pub mod p2p;
 pub mod storage;
 pub mod utils;
 
 // Re-export commonly used types
+pub use api::ApiServer;
 pub use blockchain::{Block, Blockchain, Transaction, TransactionType, ValidatorInfo};
 pub use config::{NodeConfig, ApiConfig, GridConfig, P2PConfig, ConsensusConfig};
+pub use energy::{EnergyTrading, GridManager};
+pub use governance::GovernanceSystem;
+pub use p2p::P2PNetwork;
 pub use storage::StorageManager;
 pub use utils::{crypto, EnergyConversion, ThaiEnergyMarket, Utils};
 

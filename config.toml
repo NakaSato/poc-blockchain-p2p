@@ -1,11 +1,20 @@
 # GridTokenX Blockchain Node Configuration
-# This is a sample configuration file for running a GridTokenX node
+# Version: 0.1.1 - Updated August 2025
+# Complete production-ready configuration for GridTokenX P2P energy trading blockchain
+# Supports Thailand's energy market integration with EGAT, MEA, PEA, and ERC compliance
+# Features: PoA consensus, real-time energy trading, grid integration, bonus tokens
 
 [node]
 # Unique node identifier (will be auto-generated if not provided)
 node_id = "gridtokenx-node-001"
 # Node type: validator, trader, observer, grid_operator, authority
 node_type = "validator"
+# Node version for compatibility checking
+version = "0.1.1"
+# Data directory for this specific node
+data_dir = "./data"
+# Enable performance metrics collection
+enable_metrics = true
 
 [network]
 # Network name (mainnet, testnet, devnet)
@@ -71,8 +80,8 @@ burst_size = 10
 enabled = true
 
 [storage]
-# Storage backend: rocksdb, redis, memory
-backend = "rocksdb"
+# Database backend: sled (fast Rust-native), rocksdb, redis, memory
+backend = "sled"
 # Data directory path
 path = "./data"
 # Cache size in MB
@@ -80,8 +89,17 @@ cache_size = 128
 # Enable compression
 compression = true
 
+[storage.sled]
+# Sled-specific configuration for high-performance energy trading
+# Cache size in MB for Sled database
+cache_size_mb = 256
+# Enable compression for storage efficiency
+compression = true
+# Database file mode for performance
+mode = "HighThroughput"
+# Flush frequency for durability vs performance balance
+flush_every_ms = 1000
 [storage.backup]
-# Enable automatic backups
 enabled = true
 # Backup interval in hours
 interval_hours = 24
@@ -99,9 +117,9 @@ keep_blocks = 0
 pruning_interval = 1000
 
 [consensus]
-# Consensus algorithm: pos, pow, hybrid, poa
-algorithm = "hybrid"
-# Block time target in seconds
+# Consensus algorithm: poa (Proof of Authority) - optimized for energy trading
+algorithm = "poa"
+# Block time target in seconds (optimized for energy market needs)
 block_time = 10
 # Maximum block size in bytes
 max_block_size = 1048576
@@ -109,15 +127,41 @@ max_block_size = 1048576
 gas_limit = 10000000
 # Minimum validator stake in tokens
 min_validator_stake = 100000
+# Enable instant finality for energy trading
+instant_finality = true
+# Maximum authorities for optimal performance
+max_authorities = 21
+
+[consensus.poa]
+# PoA-specific configuration for GridTokenX
+# Authority selection based on Thai energy sector entities
+authority_round_duration = 600  # 10 minutes per authority round
+# Authorities: EGAT, MEA, PEA, ERC and licensed entities
+min_authorities = 4
+max_authorities = 21
+# Authority performance monitoring
+performance_monitoring = true
+# Emergency authority activation
+emergency_protocol = true
+
+[consensus.poa.authorities]
+# Pre-approved authorities for energy trading network
+# Format: authority_id = "public_key_or_address"
+egat = "0x1234567890abcdef1234567890abcdef12345678"
+mea = "0x2345678901bcdef12345678901bcdef123456789"
+pea = "0x3456789012cdef123456789012cdef1234567890"
+erc = "0x456789013def1234567890123def12345678901"
 
 [consensus.validator]
 # Maximum number of validators
 max_validators = 21
 # Validator rotation period in blocks
 rotation_period = 1000
-
+# Authority-based validator selection
+authority_based_selection = true
+# Minimum uptime requirement (%)
+min_uptime_requirement = 99.0
 [consensus.validator.slashing]
-# Slash rate for double signing
 double_sign_slash_rate = 0.05
 # Slash rate for downtime
 downtime_slash_rate = 0.01
@@ -125,12 +169,28 @@ downtime_slash_rate = 0.01
 downtime_threshold = 100
 
 [consensus.validator.rewards]
-# Block reward in tokens
+# Block reward in tokens (base validator reward)
 block_reward = 50000
 # Transaction fee sharing rate with validators
 fee_share_rate = 0.8
 # Energy trading incentive rate
 energy_incentive_rate = 0.1
+# Maximum daily rewards per validator
+max_daily_rewards = 1000000
+# Performance bonus multiplier (0.0-2.0)
+performance_bonus_multiplier = 1.5
+
+[consensus.validator.bonus_rewards]
+# Consensus participation bonus
+consensus_participation_bonus = 10000
+# High uptime bonus (>99% uptime)
+high_uptime_bonus = 5000
+# Grid stability contribution bonus
+grid_stability_bonus = 15000
+# Energy verification bonus (per verified energy transaction)
+energy_verification_bonus = 100
+# Governance participation bonus
+governance_participation_bonus = 2000
 
 [consensus.pow]
 # Initial PoW difficulty
@@ -169,14 +229,75 @@ location_preference_weight = 0.1
 enabled = true
 # Verification required for carbon credits
 verification_required = true
+# Maximum bonus tokens per transaction
+max_bonus_per_transaction = 1000.0
+# Daily bonus token limit per producer
+daily_bonus_limit = 10000.0
 
 [energy.carbon_credits.credit_rates]
-# Carbon credit rates by energy source (credits per kWh)
-solar = 0.5
-wind = 0.6
-hydro = 0.4
-biomass = 0.3
-geothermal = 0.7
+# Carbon credit rates by energy source (bonus tokens per kWh)
+solar = 0.0
+wind = 0.0
+hydro = 0.0
+biomass = 0.0
+geothermal = 0.0
+nuclear = 0.0
+# Traditional sources (no bonus)
+natural_gas = 0.0
+coal = 0.0
+oil = 0.0
+
+[energy.bonus_tokens]
+# Enable bonus token system
+enabled = true
+# Base energy to token ratio (1 kWh = X base tokens)
+base_token_ratio = 1.0
+
+[energy.bonus_tokens.renewable_multipliers]
+# Renewable energy bonus multipliers (multiplied by base tokens)
+solar = 1.0      # 1 kWh solar = 1.0 tokens total (1 base + 0.0 bonus)
+wind = 1.0       # 1 kWh wind = 1.0 tokens total (1 base + 0.0 bonus)
+hydro = 1.0      # 1 kWh hydro = 1.0 tokens total (1 base + 0.0 bonus)
+biomass = 1.0    # 1 kWh biomass = 1.0 tokens total (1 base + 0.0 bonus)
+geothermal = 1.0 # 1 kWh geothermal = 1.0 tokens total (1 base + 0.0 bonus)
+nuclear = 1.0    # 1 kWh nuclear = 1.0 tokens total (1 base + 0.0 bonus)
+
+[energy.bonus_tokens.time_based_multipliers]
+# Time-based bonus multipliers
+peak_hours_bonus = 0.2    # Extra 0.2 tokens during peak hours
+off_peak_bonus = 0.1      # Extra 0.1 tokens during off-peak hours
+weekend_bonus = 0.05      # Extra 0.05 tokens on weekends
+holiday_bonus = 0.1       # Extra 0.1 tokens on Thai holidays
+
+[energy.bonus_tokens.grid_stability_bonus]
+# Grid stability contribution bonuses
+frequency_stability_bonus = 0.1   # Bonus for maintaining grid frequency
+voltage_regulation_bonus = 0.1    # Bonus for voltage regulation
+load_balancing_bonus = 0.15       # Bonus for load balancing services
+emergency_response_bonus = 0.5    # Bonus for emergency grid support
+
+[energy.bonus_tokens.quality_multipliers]
+# Energy quality-based multipliers
+high_quality_bonus = 0.1     # Power factor > 0.95, THD < 3%
+medium_quality_bonus = 0.05  # Power factor > 0.90, THD < 5%
+# No bonus for standard quality
+
+[energy.bonus_tokens.volume_tiers]
+# Volume-based bonus tiers (cumulative monthly production)
+tier_1_threshold = 100.0    # kWh threshold for tier 1
+tier_1_bonus = 0.02         # 2% bonus
+tier_2_threshold = 1000.0   # kWh threshold for tier 2  
+tier_2_bonus = 0.05         # 5% bonus
+tier_3_threshold = 10000.0  # kWh threshold for tier 3
+tier_3_bonus = 0.10         # 10% bonus
+
+[energy.bonus_tokens.regional_multipliers]
+# Regional bonus multipliers for grid support
+bangkok_multiplier = 1.0
+central_multiplier = 1.1     # 10% bonus for central region
+northern_multiplier = 1.2   # 20% bonus for northern region
+northeastern_multiplier = 1.3 # 30% bonus for northeastern region
+southern_multiplier = 1.15  # 15% bonus for southern region
 
 [energy.price_limits]
 # Minimum price per kWh in tokens
@@ -338,6 +459,39 @@ endpoint = "/metrics"
 # Collection interval in seconds
 collection_interval = 60
 
+[monitoring]
+# Enable comprehensive system monitoring
+enabled = true
+# Monitoring interval in seconds
+interval = 30
+# Performance metrics collection
+performance_metrics = true
+# Network metrics collection
+network_metrics = true
+# Energy trading metrics
+energy_metrics = true
+
+[monitoring.prometheus]
+# Prometheus metrics configuration
+enabled = true
+# Prometheus scrape endpoint
+endpoint = "/metrics"
+# Metrics port (separate from API port)
+port = 9090
+# Histogram buckets for latency metrics
+latency_buckets = [0.001, 0.01, 0.1, 1.0, 10.0]
+
+[monitoring.alerts]
+# Alert configuration for system health
+enabled = true
+# Alert thresholds
+high_memory_threshold = 0.8  # 80% memory usage
+high_cpu_threshold = 0.8     # 80% CPU usage
+low_disk_threshold = 0.1     # 10% disk space remaining
+# Network alert thresholds
+high_network_latency = 1000  # 1 second
+low_peer_count = 5           # Minimum peer connections
+
 [thai_market]
 [thai_market.erc_compliance]
 # Enable ERC (Energy Regulatory Commission) compliance
@@ -378,3 +532,82 @@ base_currency = "THB"
 exchange_rate_source = "https://api.exchangerate-api.com"
 # Rate update interval in hours
 rate_update_interval = 1
+
+[telemetry]
+# Telemetry and observability configuration
+enabled = true
+# Telemetry collection endpoint
+endpoint = "http://localhost:4317"
+# Service name for tracing
+service_name = "gridtokenx-node"
+# Sample rate for distributed tracing (0.0-1.0)
+trace_sample_rate = 0.1
+# Enable span collection
+enable_spans = true
+# Enable custom metrics
+enable_custom_metrics = true
+
+[performance]
+# Performance optimization settings
+# Thread pool size for async operations (0 = auto-detect)
+async_thread_pool_size = 0
+# I/O thread pool size
+io_thread_pool_size = 4
+# Memory pool size for transactions (MB)
+transaction_pool_size_mb = 64
+# Maximum pending transactions
+max_pending_transactions = 10000
+# Cache configuration
+enable_caching = true
+cache_ttl_seconds = 300
+
+[performance.optimization]
+# Advanced performance optimizations
+# Enable zero-copy operations where possible
+enable_zero_copy = true
+# Batch size for database operations
+db_batch_size = 1000
+# Network buffer sizes (bytes)
+network_recv_buffer_size = 65536
+network_send_buffer_size = 65536
+# Consensus optimization
+enable_fast_sync = true
+# Parallel transaction validation
+parallel_validation = true
+
+[backup]
+# Enhanced backup and recovery configuration
+enabled = true
+# Backup strategy: incremental, full, or smart
+strategy = "smart"
+# Backup interval in hours
+interval_hours = 6
+# Remote backup configuration
+remote_backup = true
+# Backup encryption
+encrypt_backups = true
+# Retention policy
+max_backups = 168  # 7 days * 24 hours
+
+[development]
+# Development and testing specific configuration
+# Enable hot reloading for development
+hot_reload = false
+# Enable debug endpoints
+debug_endpoints = false
+# Test mode (disables certain security features)
+test_mode = false
+# Mock external services for testing
+mock_services = false
+# Enhanced logging for development
+verbose_logging = false
+
+[experimental]
+# Experimental features (use with caution in production)
+enabled = false
+# Feature flags for new capabilities
+features = []
+# Experimental consensus optimizations
+consensus_optimizations = false
+# Experimental P2P improvements
+p2p_optimizations = false

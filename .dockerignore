@@ -1,0 +1,52 @@
+# GridTokenX Docker Ignore File
+# Prevents unnecessary files from being included in Docker context
+
+# Rust build artifacts
+target/
+Cargo.lock
+
+# Development files
+.git/
+.gitignore
+README.md
+docs/
+presentation/
+
+# Local data and config
+data/
+*.log
+*.log.*
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker files (except the ones needed)
+docker-compose.yml
+docker-compose.*.yml
+
+# Monitoring config (handled separately)
+monitoring/
+nginx/
+
+# Test artifacts
+coverage/
+test-results/
+
+# Environment files
+.env
+.env.*
+
+# Node modules (if any)
+node_modules/
+
+# Python cache (if any)
+__pycache__/
+*.pyc

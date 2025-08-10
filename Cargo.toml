@@ -1,7 +1,7 @@
 [package]
 name = "gridtokenx-blockchain"
 version = "0.1.1"
-edition = "2021"
+edition = "2024"
 authors = ["GridTokenX Team"]
 description = "Blockchain-based peer-to-peer energy trading platform for Thailand's electricity market"
 license = "MIT"
@@ -28,14 +28,14 @@ tokio = { version = "1.0", features = ["full"] }
 async-trait = "0.1"
 
 # Web framework for API - Using Axum
-axum = "0.7"
+axum = "0.8"
 tower = "0.5"
 tower-http = { version = "0.6", features = ["cors", "trace"] }
 hyper = { version = "1.0", features = ["full"] }
 reqwest = { version = "0.12", features = ["json"] }
 
-# Database - Latest version
-rocksdb = "0.23"
+# Database - Fast Rust-native database
+sled = "0.34"
 
 # Cryptography - Updated versions
 ed25519-dalek = { version = "2.0", features = ["serde"] }
@@ -46,6 +46,7 @@ pbkdf2 = "0.12"
 
 # P2P networking - Latest version
 libp2p = { version = "0.53", features = ["tcp", "noise", "yamux", "gossipsub", "kad", "mdns", "tokio"] }
+futures = "0.3"
 
 # Utilities - Latest versions
 anyhow = "1.0"

@@ -759,7 +759,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_blockchain_creation() {
-        let storage = Arc::new(StorageManager::new_memory().await.unwrap());
+        let storage = Arc::new(StorageManager::new_memory());
         let blockchain = Blockchain::new(storage).await.unwrap();
 
         let height = blockchain.get_height().await.unwrap();
@@ -768,7 +768,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_genesis_block_addition() {
-        let storage = Arc::new(StorageManager::new_memory().await.unwrap());
+        let storage = Arc::new(StorageManager::new_memory());
         let mut blockchain = Blockchain::new(storage).await.unwrap();
 
         let transactions = vec![Transaction::new_genesis_mint(
@@ -791,7 +791,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_pending_transactions() {
-        let storage = Arc::new(StorageManager::new_memory().await.unwrap());
+        let storage = Arc::new(StorageManager::new_memory());
         let blockchain = Blockchain::new(storage).await.unwrap();
 
         let tx = Transaction::new(

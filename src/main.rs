@@ -10,7 +10,10 @@ use tokio::sync::RwLock;
 use tracing::{error, info};
 
 // Use the library exports instead of local modules
-use gridtokenx_blockchain::{Blockchain, Block, Transaction, NodeConfig, StorageManager, ValidatorInfo, crypto};
+use gridtokenx_blockchain::{
+    Blockchain, Block, Transaction, NodeConfig, StorageManager, ValidatorInfo, crypto,
+    ApiServer, ApiConfig, EnergyTrading, GridManager, GovernanceSystem, P2PNetwork
+};
 
 #[derive(Parser)]
 #[command(name = "gridtokenx-node")]
@@ -118,6 +121,47 @@ async fn start_node(config_path: String, enable_mining: bool, node_type: String)
         let bc = blockchain.read().await;
         bc.get_height().await.unwrap_or(0)
     });
+
+    // Initialize energy trading and governance systems
+    let energy_trading = Arc::new(RwLock::new(EnergyTrading::new(blockchain.clone()).await?));
+    let governance = Arc::new(RwLock::new(GovernanceSystem::new(blockchain.clone()).await?));
+    let grid_manager = Arc::new(RwLock::new(GridManager::new(config.grid.clone()).await?));
+
+    // Initialize P2P network
+    let mut p2p_network = P2PNetwork::new(config.p2p.clone(), blockchain.clone()).await?;
+    
+    // Start P2P network in background
+    let p2p_handle = {
+        let mut p2p = p2p_network;
+        tokio::spawn(async move {
+            if let Err(e) = p2p.start().await {
+                error!("P2P network error: {}", e);
+            }
+        })
+    };
+
+    // Start API server
+    let api_config = config.api.clone();
+    let api_server = ApiServer::new(
+        api_config,
+        blockchain.clone(),
+        energy_trading.clone(),
+        grid_manager.clone(),
+        governance.clone(),
+    );
+
+    // Start API server in background
+    let api_handle = {
+        let api_state = api_server.state.clone();
+        tokio::spawn(async move {
+            let server = ApiServer { state: api_state };
+            if let Err(e) = server.start().await {
+                error!("API server error: {}", e);
+            }
+        })
+    };
+
+    info!("API server started on http://{}:{}", config.api.host, config.api.port);
 
     // Main event loop
     loop {
