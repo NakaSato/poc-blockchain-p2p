@@ -2,24 +2,27 @@
 
 ## Executive Summary
 
-This specification outlines the integration of advanced energy trading platform features with the existing GridTokenX blockchain infrastructure. The platform leverages the current Domain-Driven Design (DDD) architecture and extends it with smart contract-like functionality, dynamic pricing, and enhanced market mechanisms.
+This specification outlines the integration of advanced energy trading platform features with the existing GridTokenX blockchain infrastructure. The platform leverages the current modular architecture and extends it with smart contract-like functionality, dynamic pricing, and enhanced market mechanisms.
 
 ## 1. System Architecture Integration
 
-The platform builds upon the existing three-layer architecture and DDD bounded contexts to separate concerns and ensure modularity.
+The platform builds upon the existing modular architecture to separate concerns and ensure maintainability.
 
-### 1.0. Current DDD Architecture Foundation
+### 1.0. Current Architecture Foundation
 
-**Shared Kernel**: Common infrastructure and domain components already implemented
-- Domain events and error handling
-- Command/Query buses for CQRS
-- Repository patterns and aggregate roots
-- Value objects and entity management
+**Core Modules**: Main blockchain infrastructure components
+- Blockchain core with transaction processing
+- Energy trading module for market operations  
+- P2P networking for distributed communication
+- Storage management for data persistence
+- Consensus (PoA) for transaction validation
+- Governance for network management
+- API layer (Axum) for external integration
 
-**Bounded Contexts**: Domain-specific modules
-- Energy Trading (existing): Order management, trading engine, market operations
-- Governance (planned): Incentive mechanisms, voting, staking
-- Grid Management (planned): Physical layer integration
+**Key Components**:
+- Energy Trading: Order management, trading engine, market operations
+- Governance: Network governance and proposal management
+- Grid Management: Physical layer integration with Thai energy authorities
 
 ### 1.1. Physical Layer
 
@@ -35,39 +38,39 @@ The platform builds upon the existing three-layer architecture and DDD bounded c
 - **Protocols**: Existing interoperable communication through the blockchain layer
 - **Event System**: Domain events and integration events for real-time data flow
 
-### 1.3. Transactional Layer (DDD)
+### 1.3. Application Layer
 
-- **Platform**: Existing blockchain infrastructure with DDD command/query separation
-- **Core Logic**: Smart contract-like functionality through domain services and aggregates
+- **Platform**: Existing blockchain infrastructure with modular design
+- **Core Logic**: Smart contract-like functionality through service modules
 - **Current Components**:
-  - `EnergyOrder` entities with full lifecycle management
-  - `OrderBook` aggregates for trade matching
-  - `EnergyTrade` value objects for settlement
-  - Command handlers for order placement and cancellation
+  - Energy order processing and management
+  - Transaction validation and execution
+  - Market operations and order matching
+  - Settlement and payment processing
 
 ## 2. Core Modules Integration (Smart Contract-like Services)
 
-Building on the existing DDD energy trading domain, the platform enhances functionality through service-oriented smart contract simulation.
+Building on the existing energy trading module, the platform enhances functionality through service-oriented smart contract simulation.
 
 ### 2.1. Market Engine: Enhanced Double Auction Service
 
-**Current Implementation**: `OrderBook` aggregate with `EnergyTradingDomainService`
+**Current Implementation**: Energy trading module with order book functionality
 
 **Enhanced Features**:
 - **Periodic Uniform-Price Double Auction (UPDA)**: Market clearing at 15-60 minute intervals
 - **Existing Functions Enhanced**:
-  - `place_order()` → Enhanced with auction scheduling
-  - `process_order_matching()` → Upgraded to UPDA algorithm
-  - Settlement through existing trade execution
+  - Order placement and validation
+  - Order matching algorithms
+  - Trade execution and settlement
 
 **New Core Functions**:
 ```rust
-// Extends existing EnergyTradingDomainService
-impl EnergyTradingDomainService {
-    pub async fn submit_bid(&self, quantity: f64, price: f64) -> Result<OrderId>
-    pub async fn submit_ask(&self, quantity: f64, price: f64) -> Result<OrderId>
-    pub async fn clear_market(&self, market_name: String) -> Result<Vec<EnergyTrade>>
-    pub async fn settle_trades(&self, trades: Vec<EnergyTrade>) -> Result<()>
+// Energy trading service implementation
+impl EnergyTradingService {
+    pub async fn submit_bid(&self, quantity: f64, price: f64) -> Result<String>
+    pub async fn submit_ask(&self, quantity: f64, price: f64) -> Result<String>
+    pub async fn clear_market(&self, market_name: String) -> Result<Vec<Trade>>
+    pub async fn settle_trades(&self, trades: Vec<Trade>) -> Result<()>
 }
 ```
 
@@ -85,7 +88,7 @@ pt = (π/2) * pcon * tan⁻¹(k * ln(Rt)) + pbalance
 **Integration with Current System**:
 ```rust
 pub struct DynamicPricingService {
-    order_books: Arc<RwLock<HashMap<String, OrderBook>>>,
+    trading_engine: Arc<RwLock<EnergyTrading>>,
     pricing_config: PricingConfig,
 }
 
@@ -140,7 +143,7 @@ pub struct RECMarketplaceService {
 - **Rust 2021**: Existing async/await infrastructure
 - **Blockchain**: Current P2P network with libp2p
 - **Storage**: RocksDB with existing `StorageManager`
-- **DDD**: Command/Query buses, event-driven architecture
+- **Core Modules**: Modular services, event-driven architecture
 
 ### Phase 1: Enhanced Pilot (Building on Current System)
 
@@ -158,7 +161,7 @@ pub struct RECMarketplaceService {
 
 **Alternative Path**: Smart contract deployment
 - Port domain logic to Solana/Ethereum contracts
-- Maintain existing DDD structure as business logic layer
+- Maintain existing modular structure as business logic layer
 - Use blockchain for final settlement and audit trail
 
 ## 4. Enhanced Tokenomics (Integrated with Current System)
@@ -263,4 +266,4 @@ pub struct StableCreditService {
 
 ---
 
-*This enhanced specification integrates seamlessly with the existing GridTokenX DDD architecture, building upon proven foundations while adding advanced energy trading platform capabilities. The phased approach ensures minimal disruption to current operations while providing a clear path to production-ready smart contract-like functionality.*
+*This enhanced specification integrates seamlessly with the existing GridTokenX modular architecture, building upon proven foundations while adding advanced energy trading platform capabilities. The phased approach ensures minimal disruption to current operations while providing a clear path to production-ready smart contract-like functionality.*

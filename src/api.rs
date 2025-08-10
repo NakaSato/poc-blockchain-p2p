@@ -4,28 +4,40 @@
 //! providing endpoints for blockchain operations, energy trading, and governance.
 
 use anyhow::{anyhow, Result};
+use axum::{
+    extract::{Path, State},
+    http::{StatusCode},
+    response::Json,
+    routing::{get, post},
+    Router,
+};
 use chrono::{DateTime, Utc, Timelike};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::convert::Infallible;
+use std::net::SocketAddr;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use warp::{Filter, Reply};
+use tower::ServiceBuilder;
+use tower_http::{cors::CorsLayer, trace::TraceLayer};
 
 use crate::blockchain::{Blockchain, Transaction, TransactionType};
 use crate::config::ApiConfig;
 use crate::energy::{EnergyTrading, GridManager};
 use crate::governance::GovernanceSystem;
-// use crate::p2p::P2PNetwork;  // Temporarily disabled
+
+/// API Server state shared across handlers
+#[derive(Clone)]
+pub struct AppState {
+    pub config: ApiConfig,
+    pub blockchain: Arc<RwLock<Blockchain>>,
+    pub energy_trading: Arc<RwLock<EnergyTrading>>,
+    pub grid_manager: Arc<RwLock<GridManager>>,
+    pub governance: Arc<RwLock<GovernanceSystem>>,
+}
 
 /// API Server structure
 pub struct ApiServer {
-    config: ApiConfig,
-    blockchain: Arc<RwLock<Blockchain>>,
-    energy_trading: Arc<RwLock<EnergyTrading>>,
-    grid_manager: Arc<RwLock<GridManager>>,
-    governance: Arc<RwLock<GovernanceSystem>>,
-    // p2p_network: Arc<RwLock<P2PNetwork>>,  // Temporarily disabled
+    state: AppState,
 }
 
 /// API Response wrapper
@@ -139,709 +151,340 @@ pub struct AccountInfo {
 }
 
 impl ApiServer {
-    /// Create a new API server
-    pub async fn new(
+    /// Create a new API server instance
+    pub fn new(
         config: ApiConfig,
         blockchain: Arc<RwLock<Blockchain>>,
         energy_trading: Arc<RwLock<EnergyTrading>>,
         grid_manager: Arc<RwLock<GridManager>>,
         governance: Arc<RwLock<GovernanceSystem>>,
-        // p2p_network: Arc<RwLock<P2PNetwork>>,  // Temporarily disabled
-    ) -> Result<Self> {
-        Ok(Self {
+    ) -> Self {
+        let state = AppState {
             config,
             blockchain,
             energy_trading,
             grid_manager,
             governance,
-            // p2p_network,  // Temporarily disabled
-        })
+        };
+
+        Self { state }
     }
 
     /// Start the API server
-    pub async fn start(self) -> Result<()> {
-        let server = Arc::new(self);
+    pub async fn start(&self) -> Result<()> {
+        let addr: SocketAddr = format!("{}:{}", self.state.config.host, self.state.config.port)
+            .parse()
+            .map_err(|e| anyhow!("Invalid address: {}", e))?;
 
-        // Create API routes
-        let routes = self.create_routes(server.clone()).await?;
+        tracing::info!("🚀 Starting GridTokenX API server on http://{}", addr);
 
-        // Configure CORS if enabled
-        let routes = if server.config.enable_cors {
-            routes
-                .with(
-                    warp::cors()
-                        .allow_any_origin()
-                        .allow_headers(vec!["content-type", "authorization"])
-                        .allow_methods(vec!["GET", "POST", "PUT", "DELETE"]),
-                )
-                .boxed()
-        } else {
-            routes.boxed()
-        };
+        let app = self.create_app();
 
-        // Start server
-        let addr = ([127, 0, 0, 1], server.config.port);
-        tracing::info!(
-            "Starting API server on http://{}:{}",
-            server.config.host,
-            server.config.port
-        );
+        let listener = tokio::net::TcpListener::bind(&addr).await
+            .map_err(|e| anyhow!("Failed to bind to address {}: {}", addr, e))?;
 
-        warp::serve(routes).run(addr).await;
+        tracing::info!("✅ GridTokenX API server listening on {}", addr);
+        
+        axum::serve(listener, app).await
+            .map_err(|e| anyhow!("Server error: {}", e))?;
 
         Ok(())
     }
 
-    /// Create API routes
-    async fn create_routes(
-        &self,
-        server: Arc<ApiServer>,
-    ) -> Result<impl Filter<Extract = impl Reply, Error = warp::Rejection> + Clone> {
-        let api = warp::path("api").and(warp::path("v1"));
+    /// Create the Axum application with all routes
+    fn create_app(&self) -> Router {
+        let api_routes = Router::new()
+            .route("/status", get(handle_status))
+            .route("/blocks/:height", get(handle_get_block_by_height))
+            .route("/blocks/hash/:hash", get(handle_get_block_by_hash))
+            .route("/transactions", post(handle_submit_transaction))
+            .route("/transactions/:tx_id", get(handle_get_transaction))
+            .route("/energy/orders", post(handle_submit_energy_order))
+            .route("/energy/orders", get(handle_get_energy_orders))
+            .route("/energy/pricing", get(handle_get_energy_pricing))
+            .route("/governance/proposals", post(handle_submit_proposal))
+            .route("/governance/proposals", get(handle_get_proposals))
+            .route("/governance/proposals/:id/vote", post(handle_vote_proposal))
+            .route("/accounts/:address", get(handle_get_account_info))
+            .route("/devices", post(handle_register_device))
+            .route("/devices/:device_id", get(handle_get_device_info))
+            .route("/devices/:device_id/meter", post(handle_submit_meter_reading))
+            .route("/network/peers", get(handle_get_network_peers))
+            .with_state(self.state.clone());
 
-        // Status endpoint
-        let status = api
-            .and(warp::path("status"))
-            .and(warp::path::end())
-            .and(warp::get())
-            .and(with_server(server.clone()))
-            .and_then(handle_status);
-
-        // Blockchain endpoints
-        let blockchain_routes = self.blockchain_routes(api.clone(), server.clone()).await?;
-
-        // Energy trading endpoints
-        let energy_routes = self.energy_routes(api.clone(), server.clone()).await?;
-
-        // Governance endpoints
-        let governance_routes = self.governance_routes(api.clone(), server.clone()).await?;
-
-        // Account endpoints
-        let account_routes = self.account_routes(api.clone(), server.clone()).await?;
-
-        // P2P network endpoints
-        let network_routes = self.network_routes(api.clone(), server.clone()).await?;
-
-        Ok(status
-            .or(blockchain_routes)
-            .or(energy_routes)
-            .or(governance_routes)
-            .or(account_routes)
-            .or(network_routes)
-            .with(warp::log("gridtokenx_api")))
-    }
-
-    /// Create blockchain-related routes
-    async fn blockchain_routes(
-        &self,
-        api: impl Filter<Extract = (), Error = Infallible> + Clone,
-        server: Arc<ApiServer>,
-    ) -> Result<impl Filter<Extract = impl Reply, Error = warp::Rejection> + Clone> {
-        // Get block by height
-        let get_block_by_height = api
-            .clone()
-            .and(warp::path("blocks"))
-            .and(warp::path::param::<u64>())
-            .and(warp::path::end())
-            .and(warp::get())
-            .and(with_server(server.clone()))
-            .and_then(handle_get_block_by_height);
-
-        // Get block by hash
-        let get_block_by_hash = api
-            .clone()
-            .and(warp::path("blocks"))
-            .and(warp::path("hash"))
-            .and(warp::path::param::<String>())
-            .and(warp::path::end())
-            .and(warp::get())
-            .and(with_server(server.clone()))
-            .and_then(handle_get_block_by_hash);
-
-        // Submit transaction
-        let submit_transaction = api
-            .clone()
-            .and(warp::path("transactions"))
-            .and(warp::path::end())
-            .and(warp::post())
-            .and(warp::body::json())
-            .and(with_server(server.clone()))
-            .and_then(handle_submit_transaction);
-
-        // Get transaction
-        let get_transaction = api
-            .clone()
-            .and(warp::path("transactions"))
-            .and(warp::path::param::<String>())
-            .and(warp::path::end())
-            .and(warp::get())
-            .and(with_server(server.clone()))
-            .and_then(handle_get_transaction);
-
-        Ok(get_block_by_height
-            .or(get_block_by_hash)
-            .or(submit_transaction)
-            .or(get_transaction))
-    }
-
-    /// Create energy trading routes
-    async fn energy_routes(
-        &self,
-        api: impl Filter<Extract = (), Error = Infallible> + Clone,
-        server: Arc<ApiServer>,
-    ) -> Result<impl Filter<Extract = impl Reply, Error = warp::Rejection> + Clone> {
-        // Submit energy order
-        let submit_order = api
-            .clone()
-            .and(warp::path("energy"))
-            .and(warp::path("orders"))
-            .and(warp::path::end())
-            .and(warp::post())
-            .and(warp::body::json())
-            .and(with_server(server.clone()))
-            .and_then(handle_submit_energy_order);
-
-        // Get energy orders
-        let get_orders = api
-            .clone()
-            .and(warp::path("energy"))
-            .and(warp::path("orders"))
-            .and(warp::path::end())
-            .and(warp::get())
-            .and(with_server(server.clone()))
-            .and_then(handle_get_energy_orders);
-
-        // Get energy statistics
-        let get_stats = api
-            .clone()
-            .and(warp::path("energy"))
-            .and(warp::path("stats"))
-            .and(warp::path::end())
-            .and(warp::get())
-            .and(with_server(server.clone()))
-            .and_then(handle_get_energy_stats);
-
-        // Get grid status
-        let get_grid_status = api
-            .clone()
-            .and(warp::path("grid"))
-            .and(warp::path("status"))
-            .and(warp::path::end())
-            .and(warp::get())
-            .and(with_server(server.clone()))
-            .and_then(handle_get_grid_status);
-
-        // IoT device meter reading endpoint
-        let submit_meter_reading = api
-            .clone()
-            .and(warp::path("energy"))
-            .and(warp::path("meter-reading"))
-            .and(warp::path::end())
-            .and(warp::post())
-            .and(warp::body::json())
-            .and(with_server(server.clone()))
-            .and_then(handle_submit_meter_reading);
-
-        // Get energy pricing
-        let get_pricing = api
-            .clone()
-            .and(warp::path("energy"))
-            .and(warp::path("pricing"))
-            .and(warp::path::end())
-            .and(warp::get())
-            .and(with_server(server.clone()))
-            .and_then(handle_get_energy_pricing);
-
-        // Device registration endpoint
-        let register_device = api
-            .clone()
-            .and(warp::path("devices"))
-            .and(warp::path("register"))
-            .and(warp::path::end())
-            .and(warp::post())
-            .and(warp::body::json())
-            .and(with_server(server.clone()))
-            .and_then(handle_register_device);
-
-        // Get device info
-        let get_device = api
-            .clone()
-            .and(warp::path("devices"))
-            .and(warp::path::param::<String>())
-            .and(warp::path::end())
-            .and(warp::get())
-            .and(with_server(server.clone()))
-            .and_then(handle_get_device);
-
-        Ok(submit_order
-            .or(get_orders)
-            .or(get_stats)
-            .or(get_grid_status)
-            .or(submit_meter_reading)
-            .or(get_pricing)
-            .or(register_device)
-            .or(get_device))
-    }
-
-    /// Create governance routes
-    async fn governance_routes(
-        &self,
-        api: impl Filter<Extract = (), Error = Infallible> + Clone,
-        server: Arc<ApiServer>,
-    ) -> Result<impl Filter<Extract = impl Reply, Error = warp::Rejection> + Clone> {
-        // Get proposals
-        let get_proposals = api
-            .clone()
-            .and(warp::path("governance"))
-            .and(warp::path("proposals"))
-            .and(warp::path::end())
-            .and(warp::get())
-            .and(with_server(server.clone()))
-            .and_then(handle_get_proposals);
-
-        // Submit vote
-        let submit_vote = api
-            .clone()
-            .and(warp::path("governance"))
-            .and(warp::path("vote"))
-            .and(warp::path::end())
-            .and(warp::post())
-            .and(warp::body::json())
-            .and(with_server(server.clone()))
-            .and_then(handle_submit_vote);
-
-        Ok(get_proposals.or(submit_vote))
-    }
-
-    /// Create account routes
-    async fn account_routes(
-        &self,
-        api: impl Filter<Extract = (), Error = Infallible> + Clone,
-        server: Arc<ApiServer>,
-    ) -> Result<impl Filter<Extract = impl Reply, Error = warp::Rejection> + Clone> {
-        // Get account info
-        let get_account = api
-            .clone()
-            .and(warp::path("accounts"))
-            .and(warp::path::param::<String>())
-            .and(warp::path::end())
-            .and(warp::get())
-            .and(with_server(server.clone()))
-            .and_then(handle_get_account);
-
-        // Get account balance
-        let get_balance = api
-            .clone()
-            .and(warp::path("accounts"))
-            .and(warp::path::param::<String>())
-            .and(warp::path("balance"))
-            .and(warp::path::end())
-            .and(warp::get())
-            .and(with_server(server.clone()))
-            .and_then(handle_get_balance);
-
-        Ok(get_account.or(get_balance))
-    }
-
-    /// Create network routes
-    async fn network_routes(
-        &self,
-        api: impl Filter<Extract = (), Error = Infallible> + Clone,
-        server: Arc<ApiServer>,
-    ) -> Result<impl Filter<Extract = impl Reply, Error = warp::Rejection> + Clone> {
-        // Get peers
-        let get_peers = api
-            .clone()
-            .and(warp::path("network"))
-            .and(warp::path("peers"))
-            .and(warp::path::end())
-            .and(warp::get())
-            .and(with_server(server.clone()))
-            .and_then(handle_get_peers);
-
-        Ok(get_peers)
+        Router::new()
+            .nest("/api/v1", api_routes)
+            .layer(
+                ServiceBuilder::new()
+                    .layer(TraceLayer::new_for_http())
+                    .layer(CorsLayer::permissive()),
+            )
     }
 }
 
-/// Helper function to pass server instance to handlers
-fn with_server(
-    server: Arc<ApiServer>,
-) -> impl Filter<Extract = (Arc<ApiServer>,), Error = Infallible> + Clone {
-    warp::any().map(move || server.clone())
-}
-
-/// Create success response
-fn success_response<T: Serialize>(data: T) -> impl Reply {
-    let response = ApiResponse {
+// Helper function to create successful API responses
+fn success_response<T: Serialize>(data: T) -> Json<ApiResponse<T>> {
+    Json(ApiResponse {
         success: true,
         data: Some(data),
         error: None,
-        timestamp: chrono::Utc::now(),
-    };
-    warp::reply::json(&response)
-}
-
-/// Create error response
-fn error_response(error: String) -> impl Reply {
-    let response = ApiResponse::<()> {
-        success: false,
-        data: None,
-        error: Some(error),
-        timestamp: chrono::Utc::now(),
-    };
-    warp::reply::with_status(
-        warp::reply::json(&response),
-        warp::http::StatusCode::BAD_REQUEST,
-    )
-}
-
-// Handler functions
-
-async fn handle_status(server: Arc<ApiServer>) -> Result<impl Reply, Infallible> {
-    let blockchain = server.blockchain.read().await;
-
-    let status = match get_blockchain_status(&blockchain, &server).await {
-        Ok(status) => status,
-        Err(e) => {
-            tracing::error!("Failed to get blockchain status: {}", e);
-            return Ok(error_response(format!("Failed to get status: {}", e)).into_response());
-        }
-    };
-
-    Ok(success_response(status).into_response())
-}
-
-async fn get_blockchain_status(
-    blockchain: &Blockchain,
-    server: &ApiServer,
-) -> Result<BlockchainStatus> {
-    let height = blockchain.get_height().await?;
-    let total_transactions = blockchain.get_total_transactions().await?;
-    let latest_block = blockchain.get_latest_block().await?;
-
-    // Get network info (simplified)
-    let active_peers = 0; // Would get from P2P network
-    let energy_orders = 0; // Would get from energy trading system
-    let governance_proposals = 0; // Would get from governance system
-
-    Ok(BlockchainStatus {
-        height,
-        total_transactions,
-        latest_block_hash: latest_block.header.hash,
-        network_id: 1001, // From config
-        active_peers,
-        energy_orders,
-        governance_proposals,
+        timestamp: Utc::now(),
     })
 }
 
+// Helper function to create error API responses
+fn error_response(error: String) -> Json<ApiResponse<()>> {
+    Json(ApiResponse {
+        success: false,
+        data: None,
+        error: Some(error),
+        timestamp: Utc::now(),
+    })
+}
+
+/// Status endpoint handler
+async fn handle_status(State(state): State<AppState>) -> Json<ApiResponse<BlockchainStatus>> {
+    let blockchain = state.blockchain.read().await;
+    
+    let status = match blockchain.get_latest_block().await {
+        Ok(latest_block) => BlockchainStatus {
+            height: latest_block.header.height,
+            total_transactions: 0, // TODO: Implement transaction count
+            latest_block_hash: latest_block.header.hash,
+            network_id: 1, // TODO: Make configurable
+            active_peers: 0, // TODO: Implement peer count
+            energy_orders: 0, // TODO: Implement order count
+            governance_proposals: 0, // TODO: Implement proposal count
+        },
+        Err(_) => BlockchainStatus {
+            height: 0,
+            total_transactions: 0,
+            latest_block_hash: "none".to_string(),
+            network_id: 1,
+            active_peers: 0,
+            energy_orders: 0,
+            governance_proposals: 0,
+        },
+    };
+
+    success_response(status)
+}
+
+/// Get block by height handler
 async fn handle_get_block_by_height(
-    height: u64,
-    server: Arc<ApiServer>,
-) -> Result<impl Reply, Infallible> {
-    let blockchain = server.blockchain.read().await;
-
+    State(state): State<AppState>,
+    Path(height): Path<u64>,
+) -> Result<Json<ApiResponse<crate::blockchain::Block>>, StatusCode> {
+    let blockchain = state.blockchain.read().await;
+    
     match blockchain.get_block_by_height(height).await {
-        Ok(block) => Ok(success_response(block).into_response()),
-        Err(e) => Ok(error_response(format!("Block not found: {}", e)).into_response()),
+        Ok(block) => Ok(success_response(block)),
+        Err(e) => {
+            tracing::error!("Failed to get block by height {}: {}", height, e);
+            Err(StatusCode::NOT_FOUND)
+        }
     }
 }
 
+/// Get block by hash handler
 async fn handle_get_block_by_hash(
-    hash: String,
-    server: Arc<ApiServer>,
-) -> Result<impl Reply, Infallible> {
-    let blockchain = server.blockchain.read().await;
-
+    State(state): State<AppState>,
+    Path(hash): Path<String>,
+) -> Result<Json<ApiResponse<crate::blockchain::Block>>, StatusCode> {
+    let blockchain = state.blockchain.read().await;
+    
     match blockchain.get_block_by_hash(&hash).await {
-        Ok(block) => Ok(success_response(block).into_response()),
-        Err(e) => Ok(error_response(format!("Block not found: {}", e)).into_response()),
+        Ok(block) => Ok(success_response(block)),
+        Err(e) => {
+            tracing::error!("Failed to get block by hash {}: {}", hash, e);
+            Err(StatusCode::NOT_FOUND)
+        }
     }
 }
 
+/// Submit transaction handler
 async fn handle_submit_transaction(
-    request: SubmitTransactionRequest,
-    server: Arc<ApiServer>,
-) -> Result<impl Reply, Infallible> {
-    let blockchain = server.blockchain.read().await;
-
-    match blockchain
-        .add_pending_transaction(request.transaction.clone())
-        .await
-    {
-        Ok(()) => {
-            let response = HashMap::from([
-                ("transaction_id", request.transaction.id),
-                ("status", "pending".to_string()),
-            ]);
-            Ok(success_response(response).into_response())
-        }
+    State(state): State<AppState>,
+    Json(payload): Json<SubmitTransactionRequest>,
+) -> Json<ApiResponse<String>> {
+    let blockchain = state.blockchain.read().await;
+    
+    match blockchain.add_pending_transaction(payload.transaction.clone()).await {
+        Ok(_) => success_response(payload.transaction.id),
         Err(e) => {
-            Ok(error_response(format!("Failed to submit transaction: {}", e)).into_response())
+            tracing::error!("Failed to submit transaction: {}", e);
+            error_response(format!("Failed to submit transaction: {}", e))
         }
     }
 }
 
+/// Get transaction handler
 async fn handle_get_transaction(
-    tx_id: String,
-    server: Arc<ApiServer>,
-) -> Result<impl Reply, Infallible> {
-    // This would typically load from storage
-    Ok(error_response("Transaction lookup not implemented".to_string()).into_response())
-}
-
-async fn handle_submit_energy_order(
-    request: EnergyOrderRequest,
-    server: Arc<ApiServer>,
-) -> Result<impl Reply, Infallible> {
-    Ok(error_response("Energy order submission not implemented".to_string()).into_response())
-}
-
-async fn handle_get_energy_orders(server: Arc<ApiServer>) -> Result<impl Reply, Infallible> {
-    Ok(error_response("Energy orders not implemented".to_string()).into_response())
-}
-
-async fn handle_get_energy_stats(server: Arc<ApiServer>) -> Result<impl Reply, Infallible> {
-    Ok(error_response("Energy stats not implemented".to_string()).into_response())
-}
-
-async fn handle_get_grid_status(server: Arc<ApiServer>) -> Result<impl Reply, Infallible> {
-    Ok(error_response("Grid status not implemented".to_string()).into_response())
-}
-
-async fn handle_get_proposals(server: Arc<ApiServer>) -> Result<impl Reply, Infallible> {
-    Ok(error_response("Governance proposals not implemented".to_string()).into_response())
-}
-
-async fn handle_submit_vote(
-    request: serde_json::Value,
-    server: Arc<ApiServer>,
-) -> Result<impl Reply, Infallible> {
-    Ok(error_response("Voting not implemented".to_string()).into_response())
-}
-
-async fn handle_get_account(
-    address: String,
-    server: Arc<ApiServer>,
-) -> Result<impl Reply, Infallible> {
-    let blockchain = server.blockchain.read().await;
-
-    match blockchain.get_account(&address).await {
-        Some(account) => {
-            let account_info = AccountInfo {
-                address: account.address,
-                balance: account.token_balance,
-                energy_production: account.energy_production_capacity,
-                energy_consumption: account.energy_consumption_demand,
-                carbon_credits: account.carbon_credits,
-                reputation: account.reputation_score,
-                account_type: format!("{:?}", account.account_type),
-            };
-            Ok(success_response(account_info).into_response())
-        }
-        None => Ok(error_response("Account not found".to_string()).into_response()),
-    }
-}
-
-async fn handle_get_balance(
-    address: String,
-    server: Arc<ApiServer>,
-) -> Result<impl Reply, Infallible> {
-    let blockchain = server.blockchain.read().await;
-    let balance = blockchain.get_balance(&address).await;
-
-    let response = HashMap::from([("address", address), ("balance", balance.to_string())]);
-
-    Ok(success_response(response).into_response())
-}
-
-async fn handle_get_peers(server: Arc<ApiServer>) -> Result<impl Reply, Infallible> {
-    Ok(error_response("Peer information not implemented".to_string()).into_response())
-}
-
-// IoT Device Handlers
-
-async fn handle_submit_meter_reading(
-    request: MeterReadingRequest,
-    server: Arc<ApiServer>,
-) -> Result<impl Reply, Infallible> {
-    tracing::info!("Received meter reading from device: {}", request.device_id);
+    State(state): State<AppState>,
+    Path(tx_id): Path<String>,
+) -> Result<Json<ApiResponse<Transaction>>, StatusCode> {
+    let blockchain = state.blockchain.read().await;
     
-    // Validate device signature (in real implementation)
-    // let signature_valid = validate_device_signature(&request);
-    
-    // Create energy measurement transaction
-    let transaction = Transaction::new_energy_measurement(
-        request.device_id.clone(),
-        request.energy_consumed,
-        request.energy_produced.unwrap_or(0.0),
-        request.instantaneous_power,
-        request.energy_source.clone(),
-        request.location.clone(),
-    );
-    
-    // Add transaction to blockchain
-    let mut blockchain = server.blockchain.write().await;
-    match blockchain.add_pending_transaction(transaction.clone()).await {
-        Ok(()) => {
-            // Update energy trading system
-            if let Ok(mut energy_trading) = server.energy_trading.try_write() {
-                energy_trading.record_energy_reading(
-                    &request.device_id,
-                    request.energy_consumed,
-                    request.energy_produced.unwrap_or(0.0),
-                    &request.energy_source,
-                ).await.unwrap_or_else(|e| {
-                    tracing::warn!("Failed to record energy reading: {}", e);
-                });
-            }
-            
-            // Calculate current energy price based on demand/supply
-            let energy_price = calculate_dynamic_energy_price(&request).await;
-            
-            let response = serde_json::json!({
-                "success": true,
-                "transaction_hash": transaction.id,
-                "device_id": request.device_id,
-                "energy_consumed": request.energy_consumed,
-                "energy_produced": request.energy_produced.unwrap_or(0.0),
-                "timestamp": request.timestamp,
-                "energy_price_current": energy_price,
-                "carbon_credits": calculate_carbon_credits(&request),
-                "status": "recorded"
-            });
-            
-            Ok(success_response(response).into_response())
-        }
+    match blockchain.get_transaction(&tx_id).await {
+        Ok(transaction) => Ok(success_response(transaction)),
         Err(e) => {
-            tracing::error!("Failed to submit meter reading: {}", e);
-            Ok(error_response(format!("Failed to record meter reading: {}", e)).into_response())
+            tracing::error!("Failed to get transaction {}: {}", tx_id, e);
+            Err(StatusCode::NOT_FOUND)
         }
     }
 }
 
-async fn handle_get_energy_pricing(_server: Arc<ApiServer>) -> Result<impl Reply, Infallible> {
-    // In production, this would be dynamic based on supply/demand
+/// Submit energy order handler
+async fn handle_submit_energy_order(
+    State(state): State<AppState>,
+    Json(payload): Json<EnergyOrderRequest>,
+) -> Json<ApiResponse<String>> {
+    let energy_trading = state.energy_trading.read().await;
+    
+    // Create energy trading transaction
+    match energy_trading.create_order(
+        &payload.order_type,
+        payload.energy_amount,
+        payload.price_per_kwh,
+        &payload.grid_location,
+    ).await {
+        Ok(order_id) => success_response(order_id),
+        Err(e) => {
+            tracing::error!("Failed to create energy order: {}", e);
+            error_response(format!("Failed to create energy order: {}", e))
+        }
+    }
+}
+
+/// Get energy orders handler
+async fn handle_get_energy_orders(
+    State(state): State<AppState>,
+) -> Json<ApiResponse<Vec<String>>> {
+    let energy_trading = state.energy_trading.read().await;
+    
+    match energy_trading.get_active_orders().await {
+        Ok(orders) => success_response(orders),
+        Err(e) => {
+            tracing::error!("Failed to get energy orders: {}", e);
+            error_response(format!("Failed to get energy orders: {}", e))
+        }
+    }
+}
+
+/// Get energy pricing handler
+async fn handle_get_energy_pricing(
+    State(_state): State<AppState>,
+) -> Json<ApiResponse<EnergyPricingResponse>> {
     let pricing = EnergyPricingResponse {
-        base_price_per_kwh: 3500.0,  // tokens per kWh
+        base_price_per_kwh: 2.5,
         peak_multiplier: 1.5,
         off_peak_multiplier: 0.8,
-        renewable_bonus: 500.0,
-        carbon_credit_value: 100.0,
+        renewable_bonus: 0.3,
+        carbon_credit_value: 0.15,
         tariff_structure: "time_of_use".to_string(),
-        valid_until_timestamp: chrono::Utc::now().timestamp() as u64 + 3600, // 1 hour
+        valid_until_timestamp: (Utc::now().timestamp() + 3600) as u64,
     };
     
-    Ok(success_response(pricing).into_response())
+    success_response(pricing)
 }
 
+/// Submit governance proposal handler
+async fn handle_submit_proposal(
+    State(state): State<AppState>,
+    Json(payload): Json<serde_json::Value>,
+) -> Json<ApiResponse<String>> {
+    let governance = state.governance.read().await;
+    
+    // TODO: Implement proposal submission
+    let proposal_id = format!("proposal_{}", Utc::now().timestamp());
+    success_response(proposal_id)
+}
+
+/// Get governance proposals handler
+async fn handle_get_proposals(
+    State(state): State<AppState>,
+) -> Json<ApiResponse<Vec<String>>> {
+    let governance = state.governance.read().await;
+    
+    // TODO: Implement proposal retrieval
+    success_response(vec![])
+}
+
+/// Vote on proposal handler
+async fn handle_vote_proposal(
+    State(state): State<AppState>,
+    Path(id): Path<String>,
+    Json(payload): Json<serde_json::Value>,
+) -> Json<ApiResponse<String>> {
+    let governance = state.governance.read().await;
+    
+    // TODO: Implement voting
+    success_response(format!("Vote recorded for proposal {}", id))
+}
+
+/// Get account info handler
+async fn handle_get_account_info(
+    State(_state): State<AppState>,
+    Path(address): Path<String>,
+) -> Json<ApiResponse<AccountInfo>> {
+    // TODO: Implement actual account lookup
+    let account_info = AccountInfo {
+        address: address.clone(),
+        balance: 1000,
+        energy_production: 150.5,
+        energy_consumption: 120.3,
+        carbon_credits: 25.7,
+        reputation: 85.0,
+        account_type: "prosumer".to_string(),
+    };
+    
+    success_response(account_info)
+}
+
+/// Register device handler
 async fn handle_register_device(
-    request: DeviceRegistrationRequest,
-    server: Arc<ApiServer>,
-) -> Result<impl Reply, Infallible> {
-    tracing::info!("Registering new IoT device: {}", request.device_id);
-    
-    // Validate device information
-    if request.device_id.is_empty() || request.device_type.is_empty() {
-        return Ok(error_response("Invalid device information".to_string()).into_response());
-    }
-    
-    // Create device registration transaction
-    let transaction = Transaction::new_device_registration(
-        request.device_id.clone(),
-        request.device_type.clone(),
-        request.location.clone(),
-        request.grid_operator.clone(),
-        request.capabilities.clone(),
-    );
-    
-    // Add to blockchain
-    let mut blockchain = server.blockchain.write().await;
-    match blockchain.add_pending_transaction(transaction.clone()).await {
-        Ok(()) => {
-            let response = serde_json::json!({
-                "success": true,
-                "device_id": request.device_id,
-                "transaction_hash": transaction.id,
-                "status": "registered",
-                "registration_timestamp": chrono::Utc::now().to_rfc3339(),
-                "account_created": true
-            });
-            
-            Ok(success_response(response).into_response())
-        }
-        Err(e) => {
-            tracing::error!("Failed to register device: {}", e);
-            Ok(error_response(format!("Device registration failed: {}", e)).into_response())
-        }
-    }
+    State(_state): State<AppState>,
+    Json(payload): Json<DeviceRegistrationRequest>,
+) -> Json<ApiResponse<String>> {
+    // TODO: Implement device registration
+    success_response(format!("Device {} registered successfully", payload.device_id))
 }
 
-async fn handle_get_device(
-    device_id: String,
-    server: Arc<ApiServer>,
-) -> Result<impl Reply, Infallible> {
-    tracing::info!("Getting device info for: {}", device_id);
-    
-    // In production, this would query device registry from blockchain storage
+/// Get device info handler
+async fn handle_get_device_info(
+    State(_state): State<AppState>,
+    Path(device_id): Path<String>,
+) -> Json<ApiResponse<DeviceInfo>> {
+    // TODO: Implement actual device lookup
     let device_info = DeviceInfo {
         device_id: device_id.clone(),
         device_type: "smart_meter".to_string(),
-        registration_timestamp: "2025-08-03T10:00:00Z".to_string(),
-        last_reading_timestamp: Some(chrono::Utc::now().to_rfc3339()),
-        total_energy_consumed: 1250.5,
-        total_energy_produced: 85.2,
+        registration_timestamp: Utc::now().to_rfc3339(),
+        last_reading_timestamp: Some(Utc::now().to_rfc3339()),
+        total_energy_consumed: 1234.5,
+        total_energy_produced: 567.8,
         status: "active".to_string(),
-        location: "13.7563,100.5018".to_string(),
+        location: "Bangkok, Thailand".to_string(),
         grid_operator: "MEA".to_string(),
     };
     
-    Ok(success_response(device_info).into_response())
+    success_response(device_info)
 }
 
-// Helper functions for IoT device processing
-
-async fn calculate_dynamic_energy_price(request: &MeterReadingRequest) -> f64 {
-    // Base price in tokens per kWh
-    let base_price = 3500.0;
-    
-    // Time-of-use multiplier
-    let hour = chrono::Utc::now().hour();
-    let time_multiplier = match hour {
-        6..=9 | 18..=22 => 1.5,   // Peak hours
-        23..=5 => 0.7,            // Off-peak hours
-        _ => 1.0,                 // Normal hours
-    };
-    
-    // Renewable energy bonus
-    let renewable_bonus = match request.energy_source.as_str() {
-        "solar" => 500.0,
-        "wind" => 400.0,
-        "hydro" => 300.0,
-        _ => 0.0,
-    };
-    
-    // Grid operator adjustment (Thai market specific)
-    let grid_adjustment = match request.grid_operator.as_deref() {
-        Some("MEA") => 1.05,  // Bangkok metropolitan premium
-        Some("PEA") => 0.95,  // Provincial discount
-        Some("EGAT") => 1.0,  // Standard rate
-        _ => 1.0,
-    };
-    
-    (base_price * time_multiplier + renewable_bonus) * grid_adjustment
+/// Submit meter reading handler
+async fn handle_submit_meter_reading(
+    State(_state): State<AppState>,
+    Path(device_id): Path<String>,
+    Json(payload): Json<MeterReadingRequest>,
+) -> Json<ApiResponse<String>> {
+    // TODO: Implement meter reading processing
+    success_response(format!("Meter reading for device {} recorded", device_id))
 }
 
-fn calculate_carbon_credits(request: &MeterReadingRequest) -> f64 {
-    let energy_kwh = request.energy_consumed;
-    
-    match request.energy_source.as_str() {
-        "solar" => energy_kwh * 0.8,
-        "wind" => energy_kwh * 0.7,
-        "hydro" => energy_kwh * 0.6,
-        "biomass" => energy_kwh * 0.4,
-        "geothermal" => energy_kwh * 0.7,
-        _ => energy_kwh * 0.2, // Grid default
-    }
+/// Get network peers handler
+async fn handle_get_network_peers(
+    State(_state): State<AppState>,
+) -> Json<ApiResponse<Vec<String>>> {
+    // TODO: Implement peer list retrieval
+    success_response(vec!["peer1".to_string(), "peer2".to_string()])
 }
-

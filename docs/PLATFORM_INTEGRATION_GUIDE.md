@@ -2,20 +2,17 @@
 
 ## Overview
 
-This guide demonstrates how to integrate the enhanced energy trading platform features with the existing GridTokenX blockchain infrastructure. The integration builds upon the current Domain-Driven Design (DDD) architecture and adds smart contract-like functionality through enhanced domain services.
+This guide demonstrates how to integrate the enhanced energy trading platform features with the existing GridTokenX blockchain infrastructure. The integration builds upon the current modular architecture and adds smart contract-like functionality through enhanced service modules.
 
 ## Quick Start Integration
 
 ### 1. Enhanced Energy Trading with Dynamic Pricing
 
 ```rust
-use poc_blockchain_p2p::{
-    domains::energy_trading::{
-        EnergyTradingDomainService,
-        DynamicPricingService, PricingConfig,
-        AuctionSchedulerService, AuctionConfig,
-    },
-    shared::domain::events::DomainEvent,
+use gridtokenx_blockchain::{
+    energy::{EnergyTrading, GridManager},
+    blockchain::Blockchain,
+    api::ApiServer,
 };
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -25,7 +22,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize enhanced trading system
     let trading_system = EnhancedTradingSystem::new().await?;
     
-    // Start dynamic pricing and auction scheduling
+    // Start enhanced services
     trading_system.start_enhanced_services().await?;
     
     // Place orders with automatic price discovery
@@ -42,9 +39,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 struct EnhancedTradingSystem {
-    trading_service: Arc<EnergyTradingDomainService>,
-    pricing_service: Arc<DynamicPricingService>,
-    auction_service: Arc<AuctionSchedulerService>,
+    energy_trading: Arc<RwLock<EnergyTrading>>,
+    grid_manager: Arc<RwLock<GridManager>>,
+    blockchain: Arc<RwLock<Blockchain>>,
 }
 
 impl EnhancedTradingSystem {
@@ -501,4 +498,4 @@ GET  /api/v1/recs/marketplace
 POST /api/v1/recs/{id}/retire
 ```
 
-This integration guide provides a comprehensive roadmap for implementing the enhanced energy trading platform features while maintaining compatibility with the existing GridTokenX infrastructure. The phased approach ensures minimal disruption to current operations while delivering advanced smart contract-like functionality through the DDD architecture.
+This integration guide provides a comprehensive roadmap for implementing the enhanced energy trading platform features while maintaining compatibility with the existing GridTokenX infrastructure. The phased approach ensures minimal disruption to current operations while delivering advanced smart contract-like functionality through the modular architecture.

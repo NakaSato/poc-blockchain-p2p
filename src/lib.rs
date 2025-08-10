@@ -13,10 +13,6 @@
 //! - **Renewable Energy Focus**: Carbon tracking and sustainability metrics
 //! - **Governance System**: Community-driven decision making
 //! - **Regulatory Compliance**: Full compliance with Thai energy regulations
-//! - **Scalability**: Designed for high throughput and low latency
-
-// Core infrastructure modules
-pub mod scaling;
 
 // Core blockchain modules
 pub mod blockchain;
@@ -28,7 +24,6 @@ pub mod utils;
 pub use blockchain::{Block, Blockchain, Transaction, TransactionType, ValidatorInfo};
 pub use config::{NodeConfig, ApiConfig, GridConfig, P2PConfig, ConsensusConfig};
 pub use storage::StorageManager;
-pub use scaling::{ScalingCoordinator, ScalingConfig};
 pub use utils::{crypto, EnergyConversion, ThaiEnergyMarket, Utils};
 
 /// Library version

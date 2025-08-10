@@ -310,30 +310,6 @@ enabled = false
 # Default user role
 default_role = "observer"
 
-[scaling]
-# Enable automatic scaling
-enabled = true
-# Performance monitoring interval in seconds
-monitoring_interval = 30
-# CPU threshold for scaling up (percentage)
-cpu_threshold_up = 80.0
-# CPU threshold for scaling down (percentage)
-cpu_threshold_down = 30.0
-# Memory threshold for scaling up (percentage)
-memory_threshold_up = 85.0
-# Memory threshold for scaling down (percentage)
-memory_threshold_down = 40.0
-# Transaction rate threshold for scaling up (tx/sec)
-transaction_threshold_up = 100.0
-# Transaction rate threshold for scaling down (tx/sec)
-transaction_threshold_down = 20.0
-# Maximum number of shards
-max_shards = 8
-# Minimum number of shards
-min_shards = 1
-# Load balancing strategy: round_robin, least_connections, weighted
-load_balancing_strategy = "round_robin"
-
 [logging]
 # Log level (trace, debug, info, warn, error)
 level = "info"
